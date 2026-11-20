@@ -152,6 +152,8 @@ table.t tr.baja td{color:#9ca3af}
 .campo input[type=checkbox],.selbox input[type=checkbox]{width:auto;flex:none;margin:0}
 .selbox label:hover{background:#f3f6fb}
 .selbox .gr{font-size:11px;font-weight:bold;color:var(--gris);text-transform:uppercase;padding:6px 4px 2px}
+details.det{border:1px dashed var(--borde);border-radius:9px;padding:6px 10px;margin-bottom:12px}
+details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:13px;padding:4px 0}
 .selbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .selbar button{border:1px solid var(--borde);background:#fff;border-radius:14px;padding:3px 10px;font-size:12.5px;color:var(--azul)}
 .selbar button:hover{background:var(--azulc)}
@@ -173,6 +175,11 @@ table.t tr.baja td{color:#9ca3af}
 .doc .n{flex:1;min-width:0}
 .doc .n b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .doc .n small{color:var(--gris)}
+.lev{border:1px solid var(--borde);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.lev .cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lev .cab b{flex:1;min-width:180px}
+.lev .dic{font-size:13.5px;margin-top:6px;background:#f7f9fc;border-radius:8px;padding:8px 10px}
+.lev .acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .ext{flex:none;width:42px;height:42px;border-radius:7px;background:var(--azul);color:#fff;font-weight:bold;font-size:11px;display:grid;place-items:center;text-transform:uppercase}
 @media (max-width:760px){.nodo{grid-template-columns:1fr 44px 44px 44px;font-size:13px}.nodo .av{display:none}}
 @media print{header,nav.tabs,.flot,.filtros{display:none}body{background:#fff}}
@@ -300,10 +307,15 @@ const ERRORES = {
   red: 'No hay conexión con el servidor. Revise su internet.',
   archivo_invalido: 'Tipo de archivo no permitido. Use PDF, Word, Excel, PowerPoint, imágenes, TXT, CSV o ZIP.',
   archivo_muy_grande: 'El archivo supera los 15 MB.',
-  archivo_no_existe: 'El documento ya no existe.'
+  archivo_no_existe: 'El documento ya no existe.',
+  ia_no_configurada: 'La revisión con IA aún no está activada: el administrador debe ingresar la clave en la hoja (menú Seguimiento › Configurar IA).',
+  sin_evidencias: 'No hay fotos ni PDF subidos por personal de esta dependencia. Suba primero las evidencias.',
+  solo_jefe: 'Solo el jefe de la dependencia (o el administrador) puede solicitar el levantamiento.',
+  ia_error: 'La IA no pudo completar la revisión. Intente de nuevo en unos minutos.',
+  ia_sin_unidades: 'La IA no encontró en el MOF unidades con funciones relacionadas con esta tarea.'
 };
 
-const S = {token: '', usuario: null, permisos: {}, base: '', deps: [], grupos: [], arbol: [], personal: [], documentos: [], abiertos: {}, vigenteHasta: '',
+const S = {token: '', usuario: null, permisos: {}, base: '', deps: [], grupos: [], arbol: [], personal: [], documentos: [], levantamientos: [], abiertos: {}, vigenteHasta: '',
            tareas: [], bitacora: [], fotos: [], usuarios: [], vista: 'panel', servidor: ''};
 const IMG = {}; // caché de imágenes: id+tam -> dataURL
 const $ = s => document.querySelector(s);
@@ -319,6 +331,10 @@ function corto(r) { const p = String(r || '').split(SEP); return p.length > 2 ? 
 function areasT(t) { return String(t.area || '').split('\n').filter(Boolean); }
 function enRama(t, d) { return areasT(t).some(a => dentro(a, d)); }
 function depTxt(t) { const L = areasT(t); return L.length ? corto(L[0]) + (L.length > 1 ? ' (+' + (L.length - 1) + ' más)' : '') : '—'; }
+function levDe(taskId) { const m = {}; S.levantamientos.filter(x => x.taskId === taskId).sort((a, b) => a.fecha.localeCompare(b.fecha)).forEach(x => { m[x.dependencia] = x; }); return m; }
+function levOk(x) { return x && (x.estado === 'levantada' || x.estado === 'confirmada'); }
+function puedeLevantar(dep) { const u = S.usuario; return u.rol === 'admin' || (u.rol === 'jefe' && dentro(dep, u.dependencia)); }
+function depDe(et) { const s = String(et || ''), i = s.lastIndexOf(' – '); return i >= 0 ? s.slice(i + 3) : ''; }
 function hijos(ruta) { const n = ruta.split(SEP).length; return S.arbol.filter(x => x.ruta.indexOf(ruta + SEP) === 0 && x.ruta.split(SEP).length === n + 1); }
 function activa(t) { return t.estado !== 'terminada' && t.estado !== 'cancelada'; }
 function vencida(t) { const d = diasA(t.fin); return activa(t) && d !== null && d < 0; }
@@ -418,7 +434,7 @@ async function recargar(silencioso) {
   const j = await api('listar');
   if (!j.ok) { if (j.error !== 'sesion_invalida' && !silencioso) toast(msgErr(j.error), true); return false; }
   aplicarSesion(j);
-  S.tareas = j.tareas || []; S.bitacora = j.bitacora || []; S.fotos = j.fotos || []; S.documentos = j.documentos || []; S.servidor = j.servidor;
+  S.tareas = j.tareas || []; S.bitacora = j.bitacora || []; S.fotos = j.fotos || []; S.documentos = j.documentos || []; S.levantamientos = j.levantamientos || []; S.servidor = j.servidor;
   pintarPanel(); pintarLista();
   return true;
 }
@@ -527,6 +543,7 @@ function filtradas() {
   });
   return L;
 }
+function levCuenta(t) { const L = areasT(t), m = levDe(t.id), n = L.filter(d => levOk(m[d])).length; return (n || L.length > 1) && t.estado !== 'terminada' ? '✔ ' + n + '/' + L.length + ' ' : ''; }
 function pintarLista() {
   const L = filtradas();
   $('#cuenta').textContent = L.length + ' de ' + S.tareas.length + ' tareas';
@@ -537,7 +554,7 @@ function pintarLista() {
       '<div class="h"><h4>' + esc(t.titulo) + '</h4>' + chip(t.estado) + '</div>' +
       '<div class="meta"><span title="' + esc(areasT(t).join('\n')) + '">🏢 ' + esc(depTxt(t)) + '</span><span>👤 ' + esc(t.responsable || 'Sin responsable') + '</span><span class="prio ' + esc(t.prioridad) + '">' + esc(t.prioridad) + '</span></div>' +
       '<div class="rango"><div class="barra" style="flex:1"><span style="width:' + (+t.avance || 0) + '%;background:' + col + '"></span></div><b style="font-size:13px">' + (+t.avance || 0) + '%</b></div>' +
-      '<div class="meta" style="justify-content:space-between">' + plazoTxt(t) + '<span>' + (nf ? '📷 ' + nf + ' ' : '') + (nd ? '📎 ' + nd : '') + (t.editable ? '' : ' 🔒') + '</span></div></div>';
+      '<div class="meta" style="justify-content:space-between">' + plazoTxt(t) + '<span>' + levCuenta(t) + (nf ? '📷 ' + nf + ' ' : '') + (nd ? '📎 ' + nd : '') + (t.editable ? '' : ' 🔒') + '</span></div></div>';
   }).join('');
   $$('#lista .tarea').forEach(el => el.onclick = () => abrirTarea(el.dataset.id));
 }
@@ -581,29 +598,32 @@ function abrirTarea(id) {
   const v = t || {titulo: '', descripcion: '', area: u.dependencia, responsable: '', prioridad: 'Media', estado: 'pendiente', inicio: hoyISO(), fin: '', avance: '0'};
   const dis = puede ? '' : ' disabled';
   const opt = (o, val) => Object.keys(o).map(k => '<option value="' + k + '"' + (k === val ? ' selected' : '') + '>' + esc(o[k].n || o[k]) + '</option>').join('');
+  const decreto = nueva && u.rol === 'admin';
   const selAreas = areasT(v), respL = String(v.responsable || '').split(';').map(x => x.trim()).filter(Boolean);
   const nF = t ? S.fotos.filter(f => f.taskId === t.id).length + S.documentos.filter(d => d.taskId === t.id).length : 0, nB = t ? S.bitacora.filter(b => b.taskId === t.id).length : 0;
   const f = modal(
     '<div class="mcab"><h3>' + (nueva ? 'Nueva tarea' : esc(t.titulo)) + '</h3><button data-cerrar title="Cerrar">×</button></div>' +
-    (nueva ? '' : '<div class="mtabs"><button class="on" data-t="datos">Datos</button><button data-t="bit">Bitácora (' + nB + ')</button><button data-t="fotos">Fotos y documentos (' + nF + ')</button></div>') +
+    (nueva ? '' : '<div class="mtabs"><button class="on" data-t="datos">Datos</button><button data-t="bit">Bitácora (' + nB + ')</button><button data-t="fotos">Fotos y documentos (' + nF + ')</button><button data-t="lev">Levantamiento (' + areasT(t).filter(d => levOk(levDe(t.id)[d])).length + '/' + areasT(t).length + ')</button></div>') +
     '<div class="mcuerpo" data-p="datos">' +
       (puede ? '' : '<p class="solo">🔒 Solo lectura: esta tarea es de ' + esc(selAreas.join('; ')) + '. Solo esas dependencias, sus superiores o el administrador pueden modificarla.</p>') +
       '<div class="campo"><label>Título *</label><input id="tTitulo" maxlength="160" value="' + esc(v.titulo) + '"' + dis + '></div>' +
       '<div class="campo"><label>Descripción</label><textarea id="tDesc" maxlength="2000"' + dis + '>' + esc(v.descripcion) + '</textarea></div>' +
+      (decreto ? '<div class="campo"><label>Decretar a (jefes de dependencia) *</label><div class="selbar"><button type="button" id="tJefesTodos">✓ Todos los jefes</button><button type="button" id="tJefesNinguno">Quitar todos</button></div><div class="selbox"><input type="search" id="tJefQ" placeholder="Buscar jefe o dependencia…"><div class="ops" id="tJefes"></div></div><small style="color:var(--gris)">' + (S.permisos.iaConfigurada ? '🤖 Al guardar, la IA leerá el MOF y remitirá el decreto a las secciones y divisiones que por función deben ejecutarlo.' : 'La derivación automática con IA se activará cuando el administrador configure la clave.') + '</small></div><details class="det"><summary>Asignación manual detallada (opcional)</summary>' : '') +
       (puede
         ? '<div class="fila2"><div class="campo"><label>Dependencias (puede marcar varias) *</label><div class="selbar"><button type="button" id="tDepTodas">✓ Todas (comunicar a toda la unidad)</button><button type="button" id="tDepNinguna">Quitar todas</button></div><div class="selbox"><input type="search" id="tDepQ" placeholder="Buscar dependencia…"><div class="ops" id="tDeps"></div></div><div class="chips" id="tDepChips"></div></div>' +
           '<div class="campo"><label>Responsables (personal registrado)</label><div class="selbar"><button type="button" id="tRespTodosMarcar">✓ Marcar a todos los mostrados</button><button type="button" id="tRespNinguno">Quitar todos</button></div><div class="selbox"><input type="search" id="tRespQ" placeholder="Buscar persona…"><div class="ops" id="tResps"></div></div><label class="chk" style="margin-top:6px;display:inline-flex"><input type="checkbox" id="tRespTodos"> Ver todo el personal</label><input id="tRespOtro" maxlength="300" placeholder="Otros responsables (texto libre, separados por ;)" style="margin-top:6px;border:1px solid var(--borde);border-radius:7px;padding:7px 10px;width:100%"></div></div>'
         : '<div class="fila2"><div class="campo"><label>Dependencias</label><div class="solo">' + selAreas.map(esc).join('<br>') + '</div></div><div class="campo"><label>Responsables</label><div class="solo">' + esc(v.responsable || '—') + '</div></div></div>') +
+      (decreto ? '</details>' : '') +
       '<div class="fila3"><div class="campo"><label>Prioridad</label><select id="tPrio"' + dis + '>' + ['Alta', 'Media', 'Baja'].map(p => '<option' + (p === v.prioridad ? ' selected' : '') + '>' + p + '</option>').join('') + '</select></div>' +
       '<div class="campo"><label>Fecha de inicio</label><input type="date" id="tIni" value="' + esc(v.inicio) + '"' + dis + '></div>' +
       '<div class="campo"><label>Fecha límite *</label><input type="date" id="tFin" value="' + esc(v.fin) + '"' + dis + '></div></div>' +
       '<div class="fila2"><div class="campo"><label>Estado</label><select id="tEstado"' + dis + '>' + opt(ESTADOS, v.estado) + '</select></div>' +
       '<div class="campo"><label>Avance</label><div class="rango"><input type="range" id="tAv" min="0" max="100" step="5" value="' + (+v.avance || 0) + '"' + dis + '><output id="tAvO">' + (+v.avance || 0) + '%</output></div></div></div>' +
       (puede ? '<div class="campo"><label>Anotación para la bitácora (opcional)</label><textarea id="tObs" maxlength="1000" placeholder="Ej.: Se coordinó con el Dpto. de Abastecimiento la entrega de repuestos."></textarea></div>' : '') +
-      (nueva ? '' : '<p class="cuenta">Registrada por ' + esc(t.creadoPor) + ' el ' + fFechaHora(t.creado) + ' · Última actualización: ' + esc(t.actualizadoPor) + ', ' + fFechaHora(t.actualizado) + ' · ID ' + esc(t.id) + '</p>') +
+      (nueva ? '' : '<p class="cuenta">' + (t.decretadoA ? '<b>Decretado a:</b> ' + esc(t.decretadoA.split('\n').map(corto).join('; ')) + '<br>' : '') + 'Registrada por ' + esc(t.creadoPor) + ' el ' + fFechaHora(t.creado) + ' · Última actualización: ' + esc(t.actualizadoPor) + ', ' + fFechaHora(t.actualizado) + ' · ID ' + esc(t.id) + '</p>') +
     '</div>' +
-    (nueva ? '' : '<div class="mcuerpo oculto" data-p="bit"></div><div class="mcuerpo oculto" data-p="fotos"></div>') +
-    '<div class="mpie">' + (t && t.eliminable ? '<button class="btn r izq" id="tBorrar">Eliminar</button>' : '') + (t ? '<button class="btn" id="tComunicar">📣 Comunicar</button>' : '') +
+    (nueva ? '' : '<div class="mcuerpo oculto" data-p="bit"></div><div class="mcuerpo oculto" data-p="fotos"></div><div class="mcuerpo oculto" data-p="lev"></div>') +
+    '<div class="mpie">' + (t && t.eliminable ? '<button class="btn r izq" id="tBorrar">Eliminar</button>' : '') + (t ? '<button class="btn" id="tComunicar">📣 Comunicar</button>' : '') + (t && S.permisos.iaConfigurada && S.usuario.rol !== 'usuario' && puede ? '<button class="btn" id="tDerivar">🤖 Derivar con IA</button>' : '') +
       '<button class="btn" data-cerrar>' + (puede ? 'Cancelar' : 'Cerrar') + '</button>' + (puede ? '<button class="btn p" id="tGuardar">Guardar</button>' : '') + '</div>');
 
   // --- selector de dependencias (varias) ---
@@ -635,6 +655,27 @@ function abrirTarea(id) {
       : '<p class="cuenta" style="padding:6px">' + (marcadas.size ? 'No hay personal registrado en las dependencias marcadas. Marque «Ver todo el personal» o escriba abajo.' : 'Marque primero una dependencia.') + '</p>';
     box.querySelectorAll('input').forEach(c => c.onchange = () => { c.checked ? respMarc.add(c.value) : respMarc.delete(c.value); });
   };
+  if (decreto) {
+    const jefSel = new Set();
+    const pintarJefes = () => {
+      const q = (f.querySelector('#tJefQ').value || '').toLowerCase(), orden = S.arbol.map(x => x.ruta);
+      const J = S.personal.filter(p => p.rol === 'jefe' && (!q || (etiquetaP(p) + ' ' + p.dependencia).toLowerCase().indexOf(q) >= 0))
+        .sort((a, b) => orden.indexOf(a.dependencia) - orden.indexOf(b.dependencia));
+      const box = f.querySelector('#tJefes');
+      box.innerHTML = J.length ? J.map(p => '<label title="' + esc(p.dependencia) + '"><input type="checkbox" value="' + esc(p.id) + '"' + (jefSel.has(p.id) ? ' checked' : '') + '><b style="font-weight:600">' + esc(corto(p.dependencia)) + '</b> <small style="color:var(--gris)">· ' + esc(etiquetaP(p)) + '</small></label>').join('')
+        : '<p class="cuenta" style="padding:6px">No hay jefes registrados. Cree usuarios con rol «Jefe de dependencia» en Personal y claves, o use la asignación manual.</p>';
+      box.querySelectorAll('input').forEach(c => c.onchange = () => {
+        const p = S.personal.filter(x => x.id === c.value)[0]; if (!p) return;
+        if (c.checked) { jefSel.add(p.id); marcadas.add(p.dependencia); respMarc.add(etiquetaP(p)); }
+        else { jefSel.delete(p.id); marcadas.delete(p.dependencia); respMarc.delete(etiquetaP(p)); }
+        pintarDeps(); chipsDeps(); pintarResps();
+      });
+    };
+    f.querySelector('#tJefQ').oninput = pintarJefes;
+    f.querySelector('#tJefesTodos').onclick = () => { S.personal.filter(p => p.rol === 'jefe').forEach(p => { jefSel.add(p.id); marcadas.add(p.dependencia); respMarc.add(etiquetaP(p)); }); pintarJefes(); pintarDeps(); chipsDeps(); pintarResps(); };
+    f.querySelector('#tJefesNinguno').onclick = () => { S.personal.filter(p => jefSel.has(p.id)).forEach(p => { marcadas.delete(p.dependencia); respMarc.delete(etiquetaP(p)); }); jefSel.clear(); pintarJefes(); pintarDeps(); chipsDeps(); pintarResps(); };
+    setTimeout(pintarJefes, 0);
+  }
   if (puede) {
     const conocidos = new Set(S.personal.map(etiquetaP)), otros = [];
     respL.forEach(r => conocidos.has(r) ? respMarc.add(r) : otros.push(r));
@@ -647,6 +688,7 @@ function abrirTarea(id) {
     pintarDeps(); chipsDeps(); pintarResps();
   }
   const av = f.querySelector('#tAv'), est = f.querySelector('#tEstado');
+  if (u.rol !== 'admin' && v.estado !== 'terminada') { const o = est.querySelector('option[value="terminada"]'); if (o) { o.disabled = true; o.textContent = 'Terminada (solo por levantamiento)'; } }
   av.oninput = () => { f.querySelector('#tAvO').textContent = av.value + '%'; if (av.value === '100' && est.value !== 'terminada' && puede) est.value = 'terminada'; };
   est.onchange = () => { if (est.value === 'terminada') { av.value = 100; av.oninput(); } };
   f.querySelectorAll('.mtabs button').forEach(b => b.onclick = () => {
@@ -655,6 +697,7 @@ function abrirTarea(id) {
     f.querySelector('.mpie').classList.toggle('oculto', b.dataset.t !== 'datos');
     if (b.dataset.t === 'bit') pintarBitacora(f, t);
     if (b.dataset.t === 'fotos') pintarFotos(f, t);
+    if (b.dataset.t === 'lev') pintarLev(f, t);
   });
 
   const g = f.querySelector('#tGuardar');
@@ -673,11 +716,27 @@ function abrirTarea(id) {
     const j = await api('guardar', {tarea: tarea, observacion: f.querySelector('#tObs').value.trim()});
     g.disabled = false;
     if (!j.ok) { toast(msgErr(j.error), true); return; }
-    cerrar(f); toast(nueva ? 'Tarea registrada' : 'Cambios guardados');
+    cerrar(f); toast(j.aviso === 'cierre_por_levantamiento' ? 'Guardado. La tarea se cerrará cuando el jefe de cada dependencia obtenga el levantamiento.' : (nueva ? 'Tarea registrada' : 'Cambios guardados'));
     await recargar();
+    if (decreto && S.permisos.iaConfigurada) {
+      toast('🤖 La IA está leyendo el MOF para remitir el decreto… (hasta 1 minuto)');
+      const d = await api('derivar', {taskId: j.id});
+      if (d.ok) { toast('Decreto remitido a ' + d.unidades.length + (d.unidades.length === 1 ? ' unidad' : ' unidades') + ' según sus funciones.'); await recargar(); }
+      else toast(msgErr(d.error) + ' El decreto quedó con los jefes elegidos.', true);
+    }
     if (nueva) { const tn = S.tareas.filter(x => x.id === j.id)[0]; if (tn) comunicar(tn, true); }
   };
   const bc = f.querySelector('#tComunicar'); if (bc) bc.onclick = () => comunicar(t);
+  const bdv = f.querySelector('#tDerivar');
+  if (bdv) bdv.onclick = async () => {
+    const ok = await confirmar('Derivar con IA', '<p>La IA leerá las funciones del MOF y remitirá esta tarea a las unidades que deben ejecutarla' + (u.rol === 'admin' ? '' : ' dentro de su dependencia') + '. Las dependencias asignadas se reemplazarán por las que elija la IA; quedará registrado en la bitácora.</p>', 'Derivar');
+    if (!ok) return;
+    bdv.disabled = true; bdv.textContent = '🤖 Derivando…';
+    const d = await api('derivar', {taskId: t.id});
+    bdv.disabled = false; bdv.textContent = '🤖 Derivar con IA';
+    if (!d.ok) { toast(msgErr(d.error), true); return; }
+    cerrar(f); toast('Remitido a ' + d.unidades.length + (d.unidades.length === 1 ? ' unidad' : ' unidades') + ' según el MOF.'); await recargar(); abrirTarea(t.id);
+  };
   const del = f.querySelector('#tBorrar');
   if (del) del.onclick = async () => {
     const nf = S.fotos.filter(x => x.taskId === t.id).length + S.documentos.filter(x => x.taskId === t.id).length;
@@ -713,6 +772,50 @@ function comunicar(t, recienCreada) {
   };
   ta.oninput = act; act();
   f.querySelector('#cCopiar').onclick = () => navigator.clipboard.writeText(ta.value).then(() => toast('Mensaje copiado'), () => { ta.select(); toast('Seleccionado: presione Ctrl+C para copiar', true); });
+}
+
+/* ---------- levantamiento (revisión con IA por dependencia) ---------- */
+function pintarLev(f, t) {
+  const cont = f.querySelector('[data-p="lev"]'), m = levDe(t.id), L = areasT(t);
+  const chipL = x => !x ? '<span class="chip" style="background:var(--pend)">Pendiente</span>'
+    : x.estado === 'levantada' ? '<span class="chip" style="background:var(--term)">✓ Levantada (IA)</span>'
+    : x.estado === 'confirmada' ? '<span class="chip" style="background:var(--term)">✓ Confirmada</span>'
+    : x.estado === 'reabierta' ? '<span class="chip" style="background:var(--pend)">Reabierta</span>'
+    : '<span class="chip" style="background:var(--pausa)">Observada</span>';
+  cont.innerHTML = '<p class="cuenta">El <b>jefe de cada dependencia</b> solicita el levantamiento: la IA revisa las fotos y PDF subidos por su personal y dictamina si la tarea está cumplida. La tarea se cierra sola cuando <b>todas</b> las dependencias quedan levantadas.' +
+    (S.permisos.iaConfigurada ? '' : ' <b style="color:var(--venc)">La IA aún no está activada</b> (el administrador debe ingresar la clave en la hoja: Seguimiento › Configurar IA).') + '</p>' +
+    L.map(d => {
+      const x = m[d], ev = S.fotos.filter(p => p.taskId === t.id && dentro(depDe(p.subidoPor), d)).length, ed = S.documentos.filter(p => p.taskId === t.id && dentro(depDe(p.subidoPor), d)).length;
+      const falt = x && x.faltantes ? x.faltantes.split(' | ').filter(Boolean) : [];
+      return '<div class="lev"><div class="cab"><b title="' + esc(d) + '">' + esc(corto(d)) + '</b>' + chipL(x) + '<small style="color:var(--gris)">📷 ' + ev + ' · 📎 ' + ed + '</small></div>' +
+        (x ? '<div class="dic">' + (x.resumen ? esc(x.resumen) : '') + (falt.length ? '<br><b>Falta:</b> ' + falt.map(esc).join('; ') : '') + '<br><small style="color:var(--gris)">' + fFechaHora(x.fecha) + ' · ' + esc((x.por || '').split(' – ')[0]) + ' · ' + esc(x.origen || '') + (x.confianza ? ' · confianza ' + esc(x.confianza) + '%' : '') + '</small></div>' : '') +
+        '<div class="acc">' + (puedeLevantar(d) && !levOk(x) ? '<button class="btn p" data-ia="' + esc(d) + '"' + (S.permisos.iaConfigurada ? '' : ' disabled') + '>🤖 Solicitar levantamiento con IA</button>' : '') +
+        (S.usuario.rol === 'admin' ? (levOk(x) ? '<button class="btn" data-man="reabrir" data-d="' + esc(d) + '">↺ Reabrir</button>' : '<button class="btn" data-man="confirmar" data-d="' + esc(d) + '">✓ Confirmar sin IA</button>') : '') +
+        (!puedeLevantar(d) && !levOk(x) ? '<small style="color:var(--gris)">Lo solicita el jefe de esta dependencia.</small>' : '') + '</div></div>';
+    }).join('');
+  cont.querySelectorAll('[data-ia]').forEach(b => b.onclick = async () => {
+    const d = b.dataset.ia;
+    b.disabled = true; b.textContent = '🤖 La IA está revisando las evidencias… (hasta 1 minuto)';
+    const j = await api('levantar', {taskId: t.id, dependencia: d});
+    if (!j.ok) { toast(msgErr(j.error), true); b.disabled = false; b.textContent = '🤖 Solicitar levantamiento con IA'; return; }
+    toast(j.veredicto === 'LEVANTADA' ? (j.cerrada ? '✓ Levantada. Todas las dependencias cumplieron: tarea TERMINADA.' : '✓ Dependencia levantada.') : 'Observada: revise lo que falta y suba más evidencias.', j.veredicto !== 'LEVANTADA');
+    await refrescarLev(f, t);
+  });
+  cont.querySelectorAll('[data-man]').forEach(b => b.onclick = async () => {
+    const conf = b.dataset.man === 'confirmar';
+    const ok = await confirmar(conf ? 'Confirmar levantamiento' : 'Reabrir levantamiento', '<p>' + (conf ? 'Se dará por levantada' : 'Se reabrirá') + ' la tarea para <b>' + esc(b.dataset.d) + '</b>, sin revisión de la IA. Quedará registrado en la bitácora.</p>', conf ? 'Confirmar' : 'Reabrir');
+    if (!ok) return;
+    const j = await api('levantarManual', {taskId: t.id, dependencia: b.dataset.d, decision: conf ? 'confirmar' : 'reabrir'});
+    if (!j.ok) { toast(msgErr(j.error), true); return; }
+    toast(conf ? 'Levantamiento confirmado' : 'Levantamiento reabierto'); await refrescarLev(f, t);
+  });
+}
+async function refrescarLev(f, t) {
+  await recargar();
+  const tt = S.tareas.filter(x => x.id === t.id)[0] || t;
+  f.querySelector('.mtabs button[data-t="lev"]').textContent = 'Levantamiento (' + areasT(tt).filter(d => levOk(levDe(tt.id)[d])).length + '/' + areasT(tt).length + ')';
+  f.querySelector('.mtabs button[data-t="bit"]').textContent = 'Bitácora (' + S.bitacora.filter(x => x.taskId === t.id).length + ')';
+  pintarLev(f, tt);
 }
 
 function pintarBitacora(f, t) {
