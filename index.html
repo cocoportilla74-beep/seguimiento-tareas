@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-dCl77JOFm0IHY8v0A/dTx5PF1VmA2xCsL4k02d/9z6A=' https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/; style-src 'sha256-zjdJaT4yzQxpEf3tgD57UNurXwk372aYILVUBrT/12U='; img-src 'self' data: blob:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Seguimiento de Tareas – GRUP7</title>
@@ -231,7 +233,7 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
     <button class="btn p ancho" id="bLogin" type="submit">Ingresar</button>
     </div>
     <div class="err" id="lErr"></div>
-    <button type="button" class="btn ancho" id="bBioReg" style="margin-top:12px">🆕 Solicitar acceso (primera vez)</button>
+    <button type="button" class="btn ancho" id="bBioReg" data-st="margin-top:12px">🆕 Solicitar acceso (primera vez)</button>
     <div class="pie">Uso exclusivo del personal autorizado. Cada acceso queda registrado.</div>
   </form>
 </section>
@@ -325,7 +327,7 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
       </div>
       <p class="cuenta" id="cCuenta"></p>
       <div class="tabwrap"><table class="t" id="cTabla"><thead><tr><th>DNI</th><th>Grado</th><th>Apellidos y nombres</th><th>Dependencia</th><th>Puesto / cargo</th><th></th></tr></thead><tbody id="cLista"></tbody></table></div>
-      <div class="mpie" style="position:sticky;bottom:0;background:#fff;border-top:1px solid var(--borde)"><span class="cuenta izq" id="cCambios"></span><button class="btn" id="bCargosDeshacer">Descartar cambios</button><button class="btn p" id="bCargosGuardar">💾 Guardar cambios</button></div>
+      <div class="mpie" data-st="position:sticky;bottom:0;background:#fff;border-top:1px solid var(--borde)"><span class="cuenta izq" id="cCambios"></span><button class="btn" id="bCargosDeshacer">Descartar cambios</button><button class="btn p" id="bCargosGuardar">💾 Guardar cambios</button></div>
     </section>
   </main>
   <button class="btn p flot" id="bNueva">＋ Nueva tarea</button>
@@ -335,6 +337,21 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
 <div id="toast" class="oculto"></div>
 
 <script>
+/* ---------- Endurecimiento de seguridad ----------
+ * 1) No funciona dentro de un marco de otra página (anti-clickjacking).
+ * 2) Los estilos de los elementos se aplican por CSSOM (data-st), lo que permite
+ *    una Content-Security-Policy sin 'unsafe-inline'. */
+if (window.top !== window.self) {
+  document.body.textContent = 'Por seguridad, este sistema no puede abrirse dentro de otra página.';
+  throw new Error('marco bloqueado');
+}
+function aplicarEst(r) {
+  if (r.nodeType === 1 && r.hasAttribute('data-st')) { r.style.cssText = r.getAttribute('data-st'); r.removeAttribute('data-st'); }
+  if (r.querySelectorAll) r.querySelectorAll('[data-st]').forEach(e => { e.style.cssText = e.getAttribute('data-st'); e.removeAttribute('data-st'); });
+}
+aplicarEst(document);
+new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) aplicarEst(n); })))
+  .observe(document.documentElement, { childList: true, subtree: true });
 /* ================= CONFIGURACIÓN ================= */
 // Pegue aquí la "URL de la aplicación web" que termina en /exec (paso 10 de la guía):
 const API_URL = 'https://script.google.com/macros/s/AKfycbxzaxATbYF15EKzc1zMB3UM4MuMsrgqpWzy9Sv-Q9Bt3MLLneUm5MGBeOdtjP7y6ePY/exec';
@@ -422,14 +439,14 @@ function vencida(t) { const d = diasA(t.fin); return activa(t) && d !== null && 
 function fFecha(iso) { if (!iso) return '—'; const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + 'T00:00:00') : new Date(iso); if (isNaN(d)) return esc(iso); return d.toLocaleDateString('es-PE', {day: '2-digit', month: '2-digit', year: 'numeric'}); }
 function fFechaHora(iso) { const d = new Date(iso); if (isNaN(d)) return esc(iso || '—'); return d.toLocaleString('es-PE', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}); }
 function plazoTxt(t) {
-  if (!activa(t)) return t.estado === 'terminada' ? '<span class="plazo" style="color:var(--term)">✓ Terminada ' + (t.terminadoEl ? fFecha(t.terminadoEl) : '') + '</span>' : '<span class="plazo" style="color:var(--canc)">Cancelada</span>';
+  if (!activa(t)) return t.estado === 'terminada' ? '<span class="plazo" data-st="color:var(--term)">✓ Terminada ' + (t.terminadoEl ? fFecha(t.terminadoEl) : '') + '</span>' : '<span class="plazo" data-st="color:var(--canc)">Cancelada</span>';
   const d = diasA(t.fin);
   if (d === null) return '';
   if (d < 0) return '<span class="plazo rojo">⚠ Vencida hace ' + (-d) + (d === -1 ? ' día' : ' días') + '</span>';
-  if (d === 0) return '<span class="plazo" style="color:var(--pausa)">Vence hoy</span>';
-  return '<span class="plazo" style="color:' + (d <= 7 ? 'var(--pausa)' : 'var(--gris)') + '">Vence en ' + d + (d === 1 ? ' día' : ' días') + ' (' + fFecha(t.fin) + ')</span>';
+  if (d === 0) return '<span class="plazo" data-st="color:var(--pausa)">Vence hoy</span>';
+  return '<span class="plazo" data-st="color:' + (d <= 7 ? 'var(--pausa)' : 'var(--gris)') + '">Vence en ' + d + (d === 1 ? ' día' : ' días') + ' (' + fFecha(t.fin) + ')</span>';
 }
-function chip(e) { const x = ESTADOS[e] || ESTADOS.pendiente; return '<span class="chip" style="background:' + x.c + '">' + x.n + '</span>'; }
+function chip(e) { const x = ESTADOS[e] || ESTADOS.pendiente; return '<span class="chip" data-st="background:' + x.c + '">' + x.n + '</span>'; }
 function toast(m, err) { const t = $('#toast'); t.textContent = m; t.className = err ? 'err' : ''; clearTimeout(toast.h); toast.h = setTimeout(() => t.className = 'oculto', err ? 6000 : 3000); }
 function msgErr(e, extra) { return (ERRORES[e] || ('Error: ' + e)) + (extra ? ' ' + extra : ''); }
 let cargas = 0;
@@ -568,12 +585,12 @@ function pintarPanel() {
     {n: T.filter(t => t.estado === 'terminada').length, l: 'Terminadas', c: 'var(--term)', f: {estado: 'terminada'}},
     {n: ven.length, l: 'Vencidas', c: 'var(--venc)', f: {venc: true}}
   ];
-  $('#kpis').innerHTML = k.map((x, i) => '<div class="kpi" data-i="' + i + '" style="border-left-color:' + x.c + '"><div class="n" style="color:' + x.c + '">' + x.n + '</div><div class="l">' + x.l + '</div></div>').join('');
+  $('#kpis').innerHTML = k.map((x, i) => '<div class="kpi" data-i="' + i + '" data-st="border-left-color:' + x.c + '"><div class="n" data-st="color:' + x.c + '">' + x.n + '</div><div class="l">' + x.l + '</div></div>').join('');
   $$('#kpis .kpi').forEach(el => el.onclick = () => irATareas(k[+el.dataset.i].f));
 
   pintarArbol();
 
-  const fila = t => '<div class="prox" data-id="' + esc(t.id) + '">' + chip(t.estado) + '<span class="t"><b>' + esc(t.titulo) + '</b><br><small style="color:var(--gris)">' + esc(depTxt(t)) + ' · ' + esc(t.responsable || 'sin responsable') + '</small></span>' + plazoTxt(t) + '</div>';
+  const fila = t => '<div class="prox" data-id="' + esc(t.id) + '">' + chip(t.estado) + '<span class="t"><b>' + esc(t.titulo) + '</b><br><small data-st="color:var(--gris)">' + esc(depTxt(t)) + ' · ' + esc(t.responsable || 'sin responsable') + '</small></span>' + plazoTxt(t) + '</div>';
   const vs = ven.sort((a, b) => a.fin.localeCompare(b.fin));
   $('#vencidas').innerHTML = vs.length ? vs.slice(0, 8).map(fila).join('') + (vs.length > 8 ? '<p class="cuenta">… y ' + (vs.length - 8) + ' más. <a href="#" id="verVenc">Ver todas</a></p>' : '') : '<p class="cuenta">✓ No hay tareas vencidas.</p>';
   const px = act.filter(t => { const d = diasA(t.fin); return d !== null && d >= 0 && d <= 7; }).sort((a, b) => a.fin.localeCompare(b.fin));
@@ -591,20 +608,20 @@ function pintarArbol() {
     const prom = ta.length ? Math.round(ta.reduce((s, t) => s + (+t.avance || 0), 0) / ta.length) : (td.length ? 100 : 0);
     const hs = hijos(x.ruta), ab = !!S.abiertos[x.ruta];
     const per = S.personal.filter(p => p.dependencia === x.ruta), perR = S.personal.filter(p => dentro(p.dependencia, x.ruta));
-    let h = '<div class="nodo" style="padding-left:' + (6 + x.nivel * 22) + 'px"><span class="nm"><button class="tg' + (hs.length || per.length ? '' : ' v') + '" data-tg="' + esc(x.ruta) + '" aria-label="Abrir o cerrar">' + (ab ? '▾' : '▸') + '</button><b data-d="' + esc(x.ruta) + '" title="Ver tareas de ' + esc(x.ruta) + '">' + esc(x.nombre) + '</b>' + (perR.length ? '<small style="color:var(--gris);white-space:nowrap">👤 ' + perR.length + '</small>' : '') + '</span>' +
-      '<span class="av"><div class="barra"><span style="width:' + prom + '%"></span></div><small style="color:var(--gris)">' + (td.length ? prom + '%' : 'sin tareas') + '</small></span><span class="num">' + ta.length + '</span><span class="num' + (tv.length ? ' rojo' : '') + '">' + tv.length + '</span><span class="num">' + td.length + '</span></div>';
+    let h = '<div class="nodo" data-st="padding-left:' + (6 + x.nivel * 22) + 'px"><span class="nm"><button class="tg' + (hs.length || per.length ? '' : ' v') + '" data-tg="' + esc(x.ruta) + '" aria-label="Abrir o cerrar">' + (ab ? '▾' : '▸') + '</button><b data-d="' + esc(x.ruta) + '" title="Ver tareas de ' + esc(x.ruta) + '">' + esc(x.nombre) + '</b>' + (perR.length ? '<small data-st="color:var(--gris);white-space:nowrap">👤 ' + perR.length + '</small>' : '') + '</span>' +
+      '<span class="av"><div class="barra"><span data-st="width:' + prom + '%"></span></div><small data-st="color:var(--gris)">' + (td.length ? prom + '%' : 'sin tareas') + '</small></span><span class="num">' + ta.length + '</span><span class="num' + (tv.length ? ' rojo' : '') + '">' + tv.length + '</span><span class="num">' + td.length + '</span></div>';
     if (ab) {
-      if (per.length) h += '<div class="pers" style="padding-left:' + (34 + x.nivel * 22) + 'px">Personal: ' + per.map(p => '<span>' + esc(etiquetaP(p)) + (p.rol === 'jefe' ? ' (jefe)' : p.rol === 'admin' ? ' (admin)' : '') + '</span>').join('') + '</div>';
+      if (per.length) h += '<div class="pers" data-st="padding-left:' + (34 + x.nivel * 22) + 'px">Personal: ' + per.map(p => '<span>' + esc(etiquetaP(p)) + (p.rol === 'jefe' ? ' (jefe)' : p.rol === 'admin' ? ' (admin)' : '') + '</span>').join('') + '</div>';
       hs.forEach(c => { h += nodo(c, gi); });
     }
     return h;
   };
   let h = '<div class="nodo dep cab"><span>Dependencia</span><span class="av">Avance promedio (activas)</span><span class="num">Activas</span><span class="num">Vencidas</span><span class="num">Total</span></div>';
   S.grupos.forEach((g, gi) => {
-    h += '<div class="grupo"><i style="background:' + COLOR_GRUPO[gi % 5] + '"></i>' + esc(g.grupo) + '</div>';
+    h += '<div class="grupo"><i data-st="background:' + COLOR_GRUPO[gi % 5] + '"></i>' + esc(g.grupo) + '</div>';
     S.arbol.filter(x => x.grupo === g.grupo && x.nivel === 0).forEach(x => { h += nodo(x, gi); });
   });
-  h += '<p class="cuenta" style="margin-top:8px">▸ abre cada unidad · clic en el nombre para ver sus tareas · 👤 personal registrado. <a href="#" id="abrirTodo">Abrir todo</a> · <a href="#" id="cerrarTodo">Cerrar todo</a></p>';
+  h += '<p class="cuenta" data-st="margin-top:8px">▸ abre cada unidad · clic en el nombre para ver sus tareas · 👤 personal registrado. <a href="#" id="abrirTodo">Abrir todo</a> · <a href="#" id="cerrarTodo">Cerrar todo</a></p>';
   $('#porDep').innerHTML = h;
   $$('#porDep [data-tg]').forEach(b => b.onclick = () => { S.abiertos[b.dataset.tg] = !S.abiertos[b.dataset.tg]; pintarArbol(); });
   $$('#porDep b[data-d]').forEach(el => el.onclick = () => irATareas({dep: el.dataset.d}));
@@ -638,11 +655,11 @@ function pintarLista() {
   if (!L.length) { $('#lista').innerHTML = '<div class="vacio">No hay tareas con estos filtros.' + (S.tareas.length ? '' : '<br>Use <b>＋ Nueva tarea</b> para registrar la primera.') + '</div>'; return; }
   $('#lista').innerHTML = L.map(t => {
     const nf = S.fotos.filter(f => f.taskId === t.id).length, nd = S.documentos.filter(d => d.taskId === t.id).length, col = vencida(t) ? 'var(--venc)' : (ESTADOS[t.estado] || ESTADOS.pendiente).c;
-    return '<div class="tarea" data-id="' + esc(t.id) + '" style="border-top-color:' + col + '">' +
+    return '<div class="tarea" data-id="' + esc(t.id) + '" data-st="border-top-color:' + col + '">' +
       '<div class="h"><h4>' + esc(t.titulo) + '</h4>' + chip(t.estado) + '</div>' +
       '<div class="meta"><span title="' + esc(areasT(t).join('\n')) + '">🏢 ' + esc(depTxt(t)) + '</span><span>👤 ' + esc(t.responsable || 'Sin responsable') + '</span><span class="prio ' + esc(t.prioridad) + '">' + esc(t.prioridad) + '</span></div>' +
-      '<div class="rango"><div class="barra" style="flex:1"><span style="width:' + (+t.avance || 0) + '%;background:' + col + '"></span></div><b style="font-size:13px">' + (+t.avance || 0) + '%</b></div>' +
-      '<div class="meta" style="justify-content:space-between">' + plazoTxt(t) + '<span>' + levCuenta(t) + (nf ? '📷 ' + nf + ' ' : '') + (nd ? '📎 ' + nd : '') + (t.editable ? '' : ' 🔒') + '</span></div></div>';
+      '<div class="rango"><div class="barra" data-st="flex:1"><span data-st="width:' + (+t.avance || 0) + '%;background:' + col + '"></span></div><b data-st="font-size:13px">' + (+t.avance || 0) + '%</b></div>' +
+      '<div class="meta" data-st="justify-content:space-between">' + plazoTxt(t) + '<span>' + levCuenta(t) + (nf ? '📷 ' + nf + ' ' : '') + (nd ? '📎 ' + nd : '') + (t.editable ? '' : ' 🔒') + '</span></div></div>';
   }).join('');
   $$('#lista .tarea').forEach(el => el.onclick = () => abrirTarea(el.dataset.id));
 }
@@ -696,10 +713,10 @@ function abrirTarea(id) {
       (puede ? '' : '<p class="solo">🔒 Solo lectura: esta tarea es de ' + esc(selAreas.join('; ')) + '. Solo esas dependencias, sus superiores o el administrador pueden modificarla.</p>') +
       '<div class="campo"><label>Título *</label><input id="tTitulo" maxlength="160" value="' + esc(v.titulo) + '"' + dis + '></div>' +
       '<div class="campo"><label>Descripción</label><textarea id="tDesc" maxlength="2000"' + dis + '>' + esc(v.descripcion) + '</textarea></div>' +
-      (decreto ? '<div class="campo"><label>Decretar a (jefes de dependencia) *</label><div class="selbar"><button type="button" id="tJefesTodos">✓ Todos los jefes</button><button type="button" id="tJefesNinguno">Quitar todos</button></div><div class="selbox"><input type="search" id="tJefQ" placeholder="Buscar jefe o dependencia…"><div class="ops" id="tJefes"></div></div><small style="color:var(--gris)">' + (S.permisos.iaConfigurada ? '🤖 Al guardar, la IA leerá el MOF y remitirá el decreto a las secciones y divisiones que por función deben ejecutarlo.' : 'La derivación automática con IA se activará cuando el administrador configure la clave.') + '</small></div><details class="det"><summary>Asignación manual detallada (opcional)</summary>' : '') +
+      (decreto ? '<div class="campo"><label>Decretar a (jefes de dependencia) *</label><div class="selbar"><button type="button" id="tJefesTodos">✓ Todos los jefes</button><button type="button" id="tJefesNinguno">Quitar todos</button></div><div class="selbox"><input type="search" id="tJefQ" placeholder="Buscar jefe o dependencia…"><div class="ops" id="tJefes"></div></div><small data-st="color:var(--gris)">' + (S.permisos.iaConfigurada ? '🤖 Al guardar, la IA leerá el MOF y remitirá el decreto a las secciones y divisiones que por función deben ejecutarlo.' : 'La derivación automática con IA se activará cuando el administrador configure la clave.') + '</small></div><details class="det"><summary>Asignación manual detallada (opcional)</summary>' : '') +
       (puede
         ? '<div class="fila2"><div class="campo"><label>Dependencias (puede marcar varias) *</label><div class="selbar"><button type="button" id="tDepTodas">✓ Todas (comunicar a toda la unidad)</button><button type="button" id="tDepNinguna">Quitar todas</button></div><div class="selbox"><input type="search" id="tDepQ" placeholder="Buscar dependencia…"><div class="ops" id="tDeps"></div></div><div class="chips" id="tDepChips"></div></div>' +
-          '<div class="campo"><label>Responsables (personal registrado)</label><div class="selbar"><button type="button" id="tRespTodosMarcar">✓ Marcar a todos los mostrados</button><button type="button" id="tRespNinguno">Quitar todos</button></div><div class="selbox"><input type="search" id="tRespQ" placeholder="Buscar persona…"><div class="ops" id="tResps"></div></div><label class="chk" style="margin-top:6px;display:inline-flex"><input type="checkbox" id="tRespTodos"> Ver todo el personal</label><input id="tRespOtro" maxlength="300" placeholder="Otros responsables (texto libre, separados por ;)" style="margin-top:6px;border:1px solid var(--borde);border-radius:7px;padding:7px 10px;width:100%"></div></div>'
+          '<div class="campo"><label>Responsables (personal registrado)</label><div class="selbar"><button type="button" id="tRespTodosMarcar">✓ Marcar a todos los mostrados</button><button type="button" id="tRespNinguno">Quitar todos</button></div><div class="selbox"><input type="search" id="tRespQ" placeholder="Buscar persona…"><div class="ops" id="tResps"></div></div><label class="chk" data-st="margin-top:6px;display:inline-flex"><input type="checkbox" id="tRespTodos"> Ver todo el personal</label><input id="tRespOtro" maxlength="300" placeholder="Otros responsables (texto libre, separados por ;)" data-st="margin-top:6px;border:1px solid var(--borde);border-radius:7px;padding:7px 10px;width:100%"></div></div>'
         : '<div class="fila2"><div class="campo"><label>Dependencias</label><div class="solo">' + selAreas.map(esc).join('<br>') + '</div></div><div class="campo"><label>Responsables</label><div class="solo">' + esc(v.responsable || '—') + '</div></div></div>') +
       (decreto ? '</details>' : '') +
       '<div class="fila3"><div class="campo"><label>Prioridad</label><select id="tPrio"' + dis + '>' + ['Alta', 'Media', 'Baja'].map(p => '<option' + (p === v.prioridad ? ' selected' : '') + '>' + p + '</option>').join('') + '</select></div>' +
@@ -722,7 +739,7 @@ function abrirTarea(id) {
     S.grupos.forEach(g => {
       const L = S.arbol.filter(x => x.grupo === g.grupo && (!q || x.ruta.toLowerCase().indexOf(q) >= 0));
       if (!L.length) return;
-      h += '<div class="gr" data-gr="' + esc(g.grupo) + '" title="Marcar o quitar todo este grupo">' + esc(g.grupo) + ' ✓</div>' + L.map(x => '<label style="padding-left:' + (4 + (q ? 0 : x.nivel * 18)) + 'px" title="' + esc(x.ruta) + '"><input type="checkbox" value="' + esc(x.ruta) + '"' + (marcadas.has(x.ruta) ? ' checked' : '') + '>' + esc(q ? x.ruta : x.nombre) + '</label>').join('');
+      h += '<div class="gr" data-gr="' + esc(g.grupo) + '" title="Marcar o quitar todo este grupo">' + esc(g.grupo) + ' ✓</div>' + L.map(x => '<label data-st="padding-left:' + (4 + (q ? 0 : x.nivel * 18)) + 'px" title="' + esc(x.ruta) + '"><input type="checkbox" value="' + esc(x.ruta) + '"' + (marcadas.has(x.ruta) ? ' checked' : '') + '>' + esc(q ? x.ruta : x.nombre) + '</label>').join('');
     });
     const box = f.querySelector('#tDeps'); box.innerHTML = h || '<p class="cuenta">Sin coincidencias.</p>';
     box.querySelectorAll('input').forEach(c => c.onchange = () => { c.checked ? marcadas.add(c.value) : marcadas.delete(c.value); chipsDeps(); pintarResps(); });
@@ -732,15 +749,15 @@ function abrirTarea(id) {
       L.forEach(a => todas ? marcadas.delete(a) : marcadas.add(a)); pintarDeps(); chipsDeps(); pintarResps();
     });
   };
-  const chipsDeps = () => { const n = marcadas.size; f.querySelector('#tDepChips').innerHTML = (n > 6 ? '<span>' + n + ' dependencias marcadas</span>' : '') + [...marcadas].slice(0, n > 6 ? 0 : 6).map(a => '<span title="' + esc(a) + '">' + esc(corto(a)) + '</span>').join('') || '<small style="color:var(--venc)">Marque al menos una dependencia.</small>'; };
+  const chipsDeps = () => { const n = marcadas.size; f.querySelector('#tDepChips').innerHTML = (n > 6 ? '<span>' + n + ' dependencias marcadas</span>' : '') + [...marcadas].slice(0, n > 6 ? 0 : 6).map(a => '<span title="' + esc(a) + '">' + esc(corto(a)) + '</span>').join('') || '<small data-st="color:var(--venc)">Marque al menos una dependencia.</small>'; };
   // --- responsables: personal de las dependencias marcadas ---
   const pintarResps = () => {
     const q = (f.querySelector('#tRespQ').value || '').toLowerCase(), todos = f.querySelector('#tRespTodos').checked;
     const L = S.personal.filter(p => (todos || respMarc.has(etiquetaP(p)) || [...marcadas].some(a => dentro(p.dependencia, a) || dentro(a, p.dependencia))) && (!q || (etiquetaP(p) + ' ' + p.dependencia).toLowerCase().indexOf(q) >= 0))
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
     const box = f.querySelector('#tResps');
-    box.innerHTML = L.length ? L.map(p => '<label title="' + esc(p.dependencia) + '"><input type="checkbox" value="' + esc(etiquetaP(p)) + '"' + (respMarc.has(etiquetaP(p)) ? ' checked' : '') + '>' + esc(etiquetaP(p)) + ' <small style="color:var(--gris)">· ' + esc(corto(p.dependencia)) + '</small></label>').join('')
-      : '<p class="cuenta" style="padding:6px">' + (marcadas.size ? 'No hay personal registrado en las dependencias marcadas. Marque «Ver todo el personal» o escriba abajo.' : 'Marque primero una dependencia.') + '</p>';
+    box.innerHTML = L.length ? L.map(p => '<label title="' + esc(p.dependencia) + '"><input type="checkbox" value="' + esc(etiquetaP(p)) + '"' + (respMarc.has(etiquetaP(p)) ? ' checked' : '') + '>' + esc(etiquetaP(p)) + ' <small data-st="color:var(--gris)">· ' + esc(corto(p.dependencia)) + '</small></label>').join('')
+      : '<p class="cuenta" data-st="padding:6px">' + (marcadas.size ? 'No hay personal registrado en las dependencias marcadas. Marque «Ver todo el personal» o escriba abajo.' : 'Marque primero una dependencia.') + '</p>';
     box.querySelectorAll('input').forEach(c => c.onchange = () => { c.checked ? respMarc.add(c.value) : respMarc.delete(c.value); });
   };
   if (decreto) {
@@ -750,8 +767,8 @@ function abrirTarea(id) {
       const J = S.personal.filter(p => p.rol === 'jefe' && (!q || (etiquetaP(p) + ' ' + p.dependencia).toLowerCase().indexOf(q) >= 0))
         .sort((a, b) => orden.indexOf(a.dependencia) - orden.indexOf(b.dependencia));
       const box = f.querySelector('#tJefes');
-      box.innerHTML = J.length ? J.map(p => '<label title="' + esc(p.dependencia) + '"><input type="checkbox" value="' + esc(p.id) + '"' + (jefSel.has(p.id) ? ' checked' : '') + '><b style="font-weight:600">' + esc(corto(p.dependencia)) + '</b> <small style="color:var(--gris)">· ' + esc(etiquetaP(p)) + '</small></label>').join('')
-        : '<p class="cuenta" style="padding:6px">No hay jefes registrados. Cree usuarios con rol «Jefe de dependencia» en Personal y claves, o use la asignación manual.</p>';
+      box.innerHTML = J.length ? J.map(p => '<label title="' + esc(p.dependencia) + '"><input type="checkbox" value="' + esc(p.id) + '"' + (jefSel.has(p.id) ? ' checked' : '') + '><b data-st="font-weight:600">' + esc(corto(p.dependencia)) + '</b> <small data-st="color:var(--gris)">· ' + esc(etiquetaP(p)) + '</small></label>').join('')
+        : '<p class="cuenta" data-st="padding:6px">No hay jefes registrados. Cree usuarios con rol «Jefe de dependencia» en Personal y claves, o use la asignación manual.</p>';
       box.querySelectorAll('input').forEach(c => c.onchange = () => {
         const p = S.personal.filter(x => x.id === c.value)[0]; if (!p) return;
         if (c.checked) { jefSel.add(p.id); marcadas.add(p.dependencia); respMarc.add(etiquetaP(p)); }
@@ -850,7 +867,7 @@ function comunicar(t, recienCreada) {
     'Registre el avance y las evidencias en: ' + url + '\n(ID de tarea: ' + t.id + ')';
   const f = modal('<div class="mcab"><h3>📣 Comunicar tarea</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
     (recienCreada ? '<p class="solo">✓ Tarea registrada. Envíe este comunicado a todo el personal asignado con un solo paso.</p>' : '') +
-    '<div class="campo"><label>Mensaje (puede editarlo)</label><textarea id="cTxt" style="min-height:230px">' + esc(txt) + '</textarea></div>' +
+    '<div class="campo"><label>Mensaje (puede editarlo)</label><textarea id="cTxt" data-st="min-height:230px">' + esc(txt) + '</textarea></div>' +
     '<p class="cuenta">WhatsApp abre la lista de chats: elija el <b>grupo de la unidad</b> y se envía a todos a la vez.</p></div>' +
     '<div class="mpie"><button class="btn izq" id="cCopiar">📋 Copiar</button><a class="btn" id="cMail" href="#" target="_blank" rel="noopener">✉ Correo</a><a class="btn p" id="cWa" href="#" target="_blank" rel="noopener">WhatsApp</a></div>');
   const ta = f.querySelector('#cTxt');
@@ -865,21 +882,21 @@ function comunicar(t, recienCreada) {
 /* ---------- levantamiento (revisión con IA por dependencia) ---------- */
 function pintarLev(f, t) {
   const cont = f.querySelector('[data-p="lev"]'), m = levDe(t.id), L = areasT(t);
-  const chipL = x => !x ? '<span class="chip" style="background:var(--pend)">Pendiente</span>'
-    : x.estado === 'levantada' ? '<span class="chip" style="background:var(--term)">✓ Levantada (IA)</span>'
-    : x.estado === 'confirmada' ? '<span class="chip" style="background:var(--term)">✓ Confirmada</span>'
-    : x.estado === 'reabierta' ? '<span class="chip" style="background:var(--pend)">Reabierta</span>'
-    : '<span class="chip" style="background:var(--pausa)">Observada</span>';
+  const chipL = x => !x ? '<span class="chip" data-st="background:var(--pend)">Pendiente</span>'
+    : x.estado === 'levantada' ? '<span class="chip" data-st="background:var(--term)">✓ Levantada (IA)</span>'
+    : x.estado === 'confirmada' ? '<span class="chip" data-st="background:var(--term)">✓ Confirmada</span>'
+    : x.estado === 'reabierta' ? '<span class="chip" data-st="background:var(--pend)">Reabierta</span>'
+    : '<span class="chip" data-st="background:var(--pausa)">Observada</span>';
   cont.innerHTML = '<p class="cuenta">El <b>jefe de cada dependencia</b> solicita el levantamiento: la IA revisa las fotos y PDF subidos por su personal y dictamina si la tarea está cumplida. La tarea se cierra sola cuando <b>todas</b> las dependencias quedan levantadas.' +
-    (S.permisos.iaConfigurada ? '' : ' <b style="color:var(--venc)">La IA aún no está activada</b> (el administrador debe ingresar la clave en la hoja: Seguimiento › Configurar IA).') + '</p>' +
+    (S.permisos.iaConfigurada ? '' : ' <b data-st="color:var(--venc)">La IA aún no está activada</b> (el administrador debe ingresar la clave en la hoja: Seguimiento › Configurar IA).') + '</p>' +
     L.map(d => {
       const x = m[d], ev = S.fotos.filter(p => p.taskId === t.id && dentro(depDe(p.subidoPor), d)).length, ed = S.documentos.filter(p => p.taskId === t.id && dentro(depDe(p.subidoPor), d)).length;
       const falt = x && x.faltantes ? x.faltantes.split(' | ').filter(Boolean) : [];
-      return '<div class="lev"><div class="cab"><b title="' + esc(d) + '">' + esc(corto(d)) + '</b>' + chipL(x) + '<small style="color:var(--gris)">📷 ' + ev + ' · 📎 ' + ed + '</small></div>' +
-        (x ? '<div class="dic">' + (x.resumen ? esc(x.resumen) : '') + (falt.length ? '<br><b>Falta:</b> ' + falt.map(esc).join('; ') : '') + '<br><small style="color:var(--gris)">' + fFechaHora(x.fecha) + ' · ' + esc((x.por || '').split(' – ')[0]) + ' · ' + esc(x.origen || '') + (x.confianza ? ' · confianza ' + esc(x.confianza) + '%' : '') + '</small></div>' : '') +
+      return '<div class="lev"><div class="cab"><b title="' + esc(d) + '">' + esc(corto(d)) + '</b>' + chipL(x) + '<small data-st="color:var(--gris)">📷 ' + ev + ' · 📎 ' + ed + '</small></div>' +
+        (x ? '<div class="dic">' + (x.resumen ? esc(x.resumen) : '') + (falt.length ? '<br><b>Falta:</b> ' + falt.map(esc).join('; ') : '') + '<br><small data-st="color:var(--gris)">' + fFechaHora(x.fecha) + ' · ' + esc((x.por || '').split(' – ')[0]) + ' · ' + esc(x.origen || '') + (x.confianza ? ' · confianza ' + esc(x.confianza) + '%' : '') + '</small></div>' : '') +
         '<div class="acc">' + (puedeLevantar(d) && !levOk(x) ? '<button class="btn p" data-ia="' + esc(d) + '"' + (S.permisos.iaConfigurada ? '' : ' disabled') + '>🤖 Solicitar levantamiento con IA</button>' : '') +
         (S.usuario.rol === 'admin' ? (levOk(x) ? '<button class="btn" data-man="reabrir" data-d="' + esc(d) + '">↺ Reabrir</button>' : '<button class="btn" data-man="confirmar" data-d="' + esc(d) + '">✓ Confirmar sin IA</button>') : '') +
-        (!puedeLevantar(d) && !levOk(x) ? '<small style="color:var(--gris)">Lo solicita el jefe de esta dependencia.</small>' : '') + '</div></div>';
+        (!puedeLevantar(d) && !levOk(x) ? '<small data-st="color:var(--gris)">Lo solicita el jefe de esta dependencia.</small>' : '') + '</div></div>';
     }).join('');
   cont.querySelectorAll('[data-ia]').forEach(b => b.onclick = async () => {
     const d = b.dataset.ia;
@@ -918,10 +935,10 @@ function pintarFotos(f, t) {
   const cont = f.querySelector('[data-p="fotos"]');
   const L = S.fotos.filter(x => x.taskId === t.id).sort((a, b) => b.fechaServidor.localeCompare(a.fechaServidor));
   const D = S.documentos.filter(x => x.taskId === t.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
-  const docsH = '<h4 style="margin:18px 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Documentos (' + D.length + ')</h4>' +
-    (t.editable ? '<div class="subir"><div class="campo"><label>Adjuntar documentos (solo PDF o imágenes) · máx. 15 MB c/u · Word o Excel: guárdelos primero como PDF</label><input type="file" id="dArch" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"></div><div class="campo"><label>Comentario</label><input id="dCom" maxlength="500" placeholder="Qué contiene el documento"></div><button class="btn p" id="dSubir">Subir documentos</button><div class="cuenta" id="dEstado" style="margin-top:8px"></div></div>' : '') +
+  const docsH = '<h4 data-st="margin:18px 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Documentos (' + D.length + ')</h4>' +
+    (t.editable ? '<div class="subir"><div class="campo"><label>Adjuntar documentos (solo PDF o imágenes) · máx. 15 MB c/u · Word o Excel: guárdelos primero como PDF</label><input type="file" id="dArch" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"></div><div class="campo"><label>Comentario</label><input id="dCom" maxlength="500" placeholder="Qué contiene el documento"></div><button class="btn p" id="dSubir">Subir documentos</button><div class="cuenta" id="dEstado" data-st="margin-top:8px"></div></div>' : '') +
     (D.length ? '<div class="docs">' + D.map(d => '<div class="doc"><span class="ext">' + esc((d.nombre.split('.').pop() || '').slice(0, 4)) + '</span><span class="n"><b title="' + esc(d.nombre) + '">' + esc(d.nombre) + '</b><small>' + fFechaHora(d.fecha) + ' · ' + esc((d.subidoPor || '').split(' – ')[0]) + ' · ' + Math.max(1, Math.round((+d.bytes || 0) / 1024)) + ' KB' + (d.comentario ? ' · ' + esc(d.comentario) : '') + '</small></span><button class="btn" data-doc="' + esc(d.id) + '">⬇ Descargar</button></div>').join('') + '</div>' : '<p class="cuenta">Aún no hay documentos.</p>');
-  cont.innerHTML = '<h4 style="margin:0 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Fotos (' + L.length + ')</h4>' + (t.editable ? '<div class="subir"><div class="campo"><label>Agregar fotos (puede elegir varias)</label><input type="file" id="fArch" accept="image/*" multiple></div><div class="campo"><label>Comentario</label><input id="fCom" maxlength="500" placeholder="Qué muestra la foto"></div><label class="chk" style="display:inline-flex"><input type="checkbox" id="fUbic" checked> Registrar ubicación GPS</label> <button class="btn p" id="fSubir" style="margin-left:8px">Subir foto</button><div class="cuenta" id="fEstado" style="margin-top:8px"></div></div>' : '') +
+  cont.innerHTML = '<h4 data-st="margin:0 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Fotos (' + L.length + ')</h4>' + (t.editable ? '<div class="subir"><div class="campo"><label>Agregar fotos (puede elegir varias)</label><input type="file" id="fArch" accept="image/*" multiple></div><div class="campo"><label>Comentario</label><input id="fCom" maxlength="500" placeholder="Qué muestra la foto"></div><label class="chk" data-st="display:inline-flex"><input type="checkbox" id="fUbic" checked> Registrar ubicación GPS</label> <button class="btn p" id="fSubir" data-st="margin-left:8px">Subir foto</button><div class="cuenta" id="fEstado" data-st="margin-top:8px"></div></div>' : '') +
     (L.length ? '<div class="galeria">' + L.map(x => '<div class="foto" data-id="' + esc(x.id) + '"><div class="img">cargando…</div><div class="d">' + fFechaHora(x.fechaServidor) + '<br>' + esc((x.subidoPor || '').split(' – ')[0]) + (x.lat ? ' · 📍' : '') + '</div></div>').join('') + '</div>' : '<p class="cuenta">Aún no hay fotos.</p>') + docsH;
   cont.querySelectorAll('[data-doc]').forEach(b => b.onclick = () => descargarDoc(b.dataset.doc, b));
   const bd = cont.querySelector('#dSubir'); if (bd) bd.onclick = () => subirDocs(f, t, cont);
@@ -1146,10 +1163,10 @@ $('#bBioReg').onclick = () => {
     '<p class="cuenta">Ingrese su DNI. Luego completará sus datos, las fotos de su DNI y carné FAP, y registrará su huella o rostro en este equipo. El administrador aprobará su acceso.</p>' +
     '<p class="pdatos">🔒 <b>Protección de datos personales:</b> sus datos se tratan conforme a la Ley N.° 29733, Ley de Protección de Datos Personales, y su Reglamento (D.S. N.° 016-2024-JUS). Las fotos de su DNI y carné FAP solo sirven para verificar su identidad y <b>se eliminan definitivamente al terminar su alta</b>.</p>' +
     '<div class="campo"><label>DNI *</label><input id="rDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>' +
-    '<p style="margin:6px 0 0"><a href="#" id="rConCod" style="font-size:13px">Tengo un código del administrador</a></p>' +
-    '<div class="campo oculto" id="rCodCaja"><label>Código del administrador</label><input id="rInv" maxlength="9" placeholder="XXXX-XXXX" style="text-transform:uppercase"></div>' +
-    '<p class="oculto" id="rEst" style="margin:10px 0 0;padding:10px 12px;border-radius:8px;background:#eef3fb;color:#0b2a5b;font-weight:600">⏳ Preparando su formulario de inscripción… Espere unos segundos y no cierre esta ventana. No le llegará ningún código: el sistema lo genera solo.</p>' +
-    '<div class="err" id="rErr" style="color:var(--venc)"></div>' +
+    '<p data-st="margin:6px 0 0"><a href="#" id="rConCod" data-st="font-size:13px">Tengo un código del administrador</a></p>' +
+    '<div class="campo oculto" id="rCodCaja"><label>Código del administrador</label><input id="rInv" maxlength="9" placeholder="XXXX-XXXX" data-st="text-transform:uppercase"></div>' +
+    '<p class="oculto" id="rEst" data-st="margin:10px 0 0;padding:10px 12px;border-radius:8px;background:#eef3fb;color:#0b2a5b;font-weight:600">⏳ Preparando su formulario de inscripción… Espere unos segundos y no cierre esta ventana. No le llegará ningún código: el sistema lo genera solo.</p>' +
+    '<div class="err" id="rErr" data-st="color:var(--venc)"></div>' +
     '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="rIr">Continuar</button></div>', true);
   formatear(f.querySelector('#rInv'), [4, 4]);
   f.querySelector('#rDni').addEventListener('input', e => e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8));
@@ -1188,10 +1205,10 @@ function formularioAlta(dni, inv, info) {
     '<div class="fila2"><div class="campo"><label>Grado *</label><input id="aGrado" maxlength="40" placeholder="Ej.: MY. FAP, TCO1 FAP, EC" list="lGrados"></div>' +
     '<div class="campo"><label>Apellidos y nombres *</label><input id="aNombre" maxlength="100" placeholder="Pérez Ruiz, Juan Carlos"></div></div>' +
     '<datalist id="lGrados">' + ['GRAL. FAP', 'MAG. FAP', 'COR. FAP', 'CMDTE. FAP', 'MAY. FAP', 'CAP. FAP', 'TTE. FAP', 'ALF. FAP', 'TCO. SUP. FAP', 'TCO1 FAP', 'TCO2 FAP', 'TCO3 FAP', 'SO1 FAP', 'SO2 FAP', 'SO3 FAP', 'EC FAP', 'SMV FAP'].map(g => '<option value="' + g + '">').join('') + '</datalist>' +
-    '<div class="campo"><label>Dependencia donde trabaja actualmente *</label><input type="search" id="aDepQ" placeholder="Buscar dependencia…" style="margin-bottom:4px"><select id="aDep" size="7"></select></div>' +
+    '<div class="campo"><label>Dependencia donde trabaja actualmente *</label><input type="search" id="aDepQ" placeholder="Buscar dependencia…" data-st="margin-bottom:4px"><select id="aDep" size="7"></select></div>' +
     '<div class="campo"><label>Puesto que ocupa actualmente *</label><select id="aPuesto"><option value="">— Elija primero la dependencia —</option></select>' +
-    '<input id="aPuestoOtro" class="oculto" maxlength="120" placeholder="Escriba su puesto" style="margin-top:6px"></div>' +
-    '<label style="margin-top:10px;display:block;font-weight:bold;font-size:13px">Fotos (tómelas de cerca, con buena luz y sin reflejos) *</label>' +
+    '<input id="aPuestoOtro" class="oculto" maxlength="120" placeholder="Escriba su puesto" data-st="margin-top:6px"></div>' +
+    '<label data-st="margin-top:10px;display:block;font-weight:bold;font-size:13px">Fotos (tómelas de cerca, con buena luz y sin reflejos) *</label>' +
     '<div class="fotos3">' + Object.keys(ETQ).map(k => '<label id="l_' + k + '"><span>' + ETQ[k] + '<br><small>Tocar para tomar o elegir</small></span><input type="file" accept="image/*" capture="environment" data-k="' + k + '"></label>').join('') + '</div>' +
     '<div class="pdatos"><b>🔒 Tratamiento de sus datos personales</b> (Ley N.° 29733 y su Reglamento, D.S. N.° 016-2024-JUS)<ul>' +
     '<li><b>Finalidad:</b> verificar su identidad y darle de alta en el sistema de seguimiento de tareas del Grupo Aéreo N.° 7.</li>' +
@@ -1200,7 +1217,7 @@ function formularioAlta(dni, inv, info) {
     '<li><b>Huella o rostro:</b> no se envían ni se guardan en el sistema; quedan solo en su celular.</li>' +
     '<li>Puede pedir al administrador la corrección o eliminación de sus datos.</li></ul></div>' +
     '<label class="consent"><input type="checkbox" id="aOk"><span>' + esc(info.consentimiento) + '</span></label>' +
-    '<div class="err" id="aErr" style="color:var(--venc);margin-top:8px"></div>' +
+    '<div class="err" id="aErr" data-st="color:var(--venc);margin-top:8px"></div>' +
     '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="aEnviar">Enviar solicitud</button></div>');
   const selDep = f.querySelector('#aDep'), selP = f.querySelector('#aPuesto'), otro = f.querySelector('#aPuestoOtro');
   const pintarDep = () => {
@@ -1257,8 +1274,8 @@ function avisoPendiente(conHuella) {
 async function registrarAparato(dni, inv, nuevo) {
   const f = modal('<div class="mcab"><h3>Registrar huella o rostro</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
     '<p class="cuenta">Use el celular o la computadora con el que ingresará. Su huella o rostro <b>no se envía</b> a ningún lado: el aparato la comprueba y solo entrega una firma digital.</p>' +
-    (BIO_OK ? '' : '<p class="err" style="color:var(--venc)">Este navegador no permite huella ni rostro. Use un celular o computadora actualizados (Chrome, Edge o Safari).</p>') +
-    '<div class="err" id="rErr" style="color:var(--venc)"></div></div><div class="mpie"><button class="btn" data-cerrar>Ahora no</button><button class="btn p" id="rIr"' + (BIO_OK ? '' : ' disabled') + '>👆 Registrar ahora</button></div>', true);
+    (BIO_OK ? '' : '<p class="err" data-st="color:var(--venc)">Este navegador no permite huella ni rostro. Use un celular o computadora actualizados (Chrome, Edge o Safari).</p>') +
+    '<div class="err" id="rErr" data-st="color:var(--venc)"></div></div><div class="mpie"><button class="btn" data-cerrar>Ahora no</button><button class="btn p" id="rIr"' + (BIO_OK ? '' : ' disabled') + '>👆 Registrar ahora</button></div>', true);
   f.querySelectorAll('[data-cerrar]').forEach(x => x.addEventListener('click', () => { if (nuevo) avisoPendiente(false); }));
   f.querySelector('#rIr').onclick = async () => {
     const err = f.querySelector('#rErr'), b = f.querySelector('#rIr');
@@ -1301,15 +1318,15 @@ function pintarUsuarios() {
   const orden = S.deps;
   const L = S.usuarios.filter(u => !q || (u.grado + ' ' + u.nombre + ' ' + u.dependencia + ' ' + u.rol).toLowerCase().indexOf(q) >= 0)
     .sort((a, b) => (orden.indexOf(a.dependencia) - orden.indexOf(b.dependencia)) || a.nombre.localeCompare(b.nombre));
-  $('#uLista').innerHTML = L.length ? L.map(u => '<tr class="' + (u.activo === 'SI' ? '' : u.activo === 'PENDIENTE' ? 'pend' : 'baja') + '"><td><b>' + esc([u.grado, u.nombre].filter(Boolean).join(' ') || 'DNI ' + (u.dni || '')) + '</b></td><td title="' + esc(u.dependencia) + '">' + esc(corto(u.dependencia) || '—') + (u.cargo ? '<br><small>' + esc(u.cargo) + '</small>' : '') + '</td><td>' + esc(ROLES[u.rol] || u.rol) + '</td><td>' + (u.activo === 'SI' ? '<span style="color:var(--term)">● Activo</span>' : u.activo === 'PENDIENTE' ? '<span style="color:var(--pausa)">⏳ Pendiente de alta</span>' : '○ De baja') + '</td><td>' + bioEstado(u) + '</td><td>' + (u.ultimoAcceso ? fFechaHora(u.ultimoAcceso) : 'Nunca') + '</td><td><button class="btn" data-u="' + esc(u.id) + '">Editar</button></td></tr>').join('') : '<tr><td colspan="7" class="cuenta">Sin resultados.</td></tr>';
+  $('#uLista').innerHTML = L.length ? L.map(u => '<tr class="' + (u.activo === 'SI' ? '' : u.activo === 'PENDIENTE' ? 'pend' : 'baja') + '"><td><b>' + esc([u.grado, u.nombre].filter(Boolean).join(' ') || 'DNI ' + (u.dni || '')) + '</b></td><td title="' + esc(u.dependencia) + '">' + esc(corto(u.dependencia) || '—') + (u.cargo ? '<br><small>' + esc(u.cargo) + '</small>' : '') + '</td><td>' + esc(ROLES[u.rol] || u.rol) + '</td><td>' + (u.activo === 'SI' ? '<span data-st="color:var(--term)">● Activo</span>' : u.activo === 'PENDIENTE' ? '<span data-st="color:var(--pausa)">⏳ Pendiente de alta</span>' : '○ De baja') + '</td><td>' + bioEstado(u) + '</td><td>' + (u.ultimoAcceso ? fFechaHora(u.ultimoAcceso) : 'Nunca') + '</td><td><button class="btn" data-u="' + esc(u.id) + '">Editar</button></td></tr>').join('') : '<tr><td colspan="7" class="cuenta">Sin resultados.</td></tr>';
   $$('#uLista [data-u]').forEach(b => b.onclick = () => { const u = S.usuarios.filter(x => x.id === b.dataset.u)[0];
     if (u.activo === 'PENDIENTE') { if (u.nombre) { cambiarVista('solicitudes'); } else invitarDni(u.dni); return; } abrirUsuario(u); });
 }
 $('#bNuevoUsuario').onclick = () => abrirUsuario(null);
 function bioEstado(u) {
-  if (u.biometria === 'SI' && u.aparatos) return '<span style="color:var(--term)">👆 Activa (' + u.aparatos + (u.aparatos === 1 ? ' aparato' : ' aparatos') + ')</span>';
-  if (u.biometria === 'SI' && u.invitacionVence) return '<span style="color:var(--pausa)">✉ Invitación pendiente</span>';
-  return '<span style="color:var(--gris)">—</span>';
+  if (u.biometria === 'SI' && u.aparatos) return '<span data-st="color:var(--term)">👆 Activa (' + u.aparatos + (u.aparatos === 1 ? ' aparato' : ' aparatos') + ')</span>';
+  if (u.biometria === 'SI' && u.invitacionVence) return '<span data-st="color:var(--pausa)">✉ Invitación pendiente</span>';
+  return '<span data-st="color:var(--gris)">—</span>';
 }
 function abrirUsuario(u) {
   const nuevo = !u, v = u || {grado: '', nombre: '', dependencia: S.deps[0], rol: 'usuario', activo: 'SI'};
@@ -1322,8 +1339,8 @@ function abrirUsuario(u) {
     '<div class="campo"><label>Puesto (según el MOF)</label><select id="uPuesto"></select></div></div><div class="fila2">' +
     '<div class="campo"><label>Rol</label><select id="uRol"' + (yo ? ' disabled' : '') + '>' + Object.keys(ROLES).map(r => '<option value="' + r + '"' + (r === v.rol ? ' selected' : '') + '>' + ROLES[r] + '</option>').join('') + '</select></div></div>' +
     '<p class="cuenta">Cada persona trabaja las tareas de su unidad y de todas las que dependen de ella. <b>Usuario:</b> crea y edita tareas de su dependencia. <b>Jefe:</b> además puede eliminarlas. <b>Administrador:</b> todo, incluido el personal y las claves.</p>' +
-    (nuevo ? '' : '<label class="chk" style="display:inline-flex"><input type="checkbox" id="uActivo"' + (v.activo === 'SI' ? ' checked' : '') + (yo ? ' disabled' : '') + '> Activo (desmarque para dar de baja)</label>') +
-    (nuevo ? '' : '<div class="biocaja"><h4>Ingreso con huella o rostro</h4><p class="cuenta" style="margin:0 0 8px">Estado: ' + bioEstado(v) + (v.invitacionVence ? ' · vence ' + fFechaHora(v.invitacionVence) : '') + '</p>' +
+    (nuevo ? '' : '<label class="chk" data-st="display:inline-flex"><input type="checkbox" id="uActivo"' + (v.activo === 'SI' ? ' checked' : '') + (yo ? ' disabled' : '') + '> Activo (desmarque para dar de baja)</label>') +
+    (nuevo ? '' : '<div class="biocaja"><h4>Ingreso con huella o rostro</h4><p class="cuenta" data-st="margin:0 0 8px">Estado: ' + bioEstado(v) + (v.invitacionVence ? ' · vence ' + fFechaHora(v.invitacionVence) : '') + '</p>' +
       '<button class="btn" id="uInvitar">' + (v.biometria === 'SI' ? (v.aparatos ? '➕ Invitar otro aparato' : '✉ Nueva invitación') : '✅ Activar e invitar') + '</button> ' +
       (v.biometria === 'SI' ? '<button class="btn" id="uQuitarBio">⛔ Desactivar huella/rostro</button>' : '') + '</div>') +
     '</div><div class="mpie">' + (nuevo ? '' : '<button class="btn izq" id="uClave">Generar nueva clave</button>') + '<button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="uGuardar">' + (nuevo ? 'Crear y generar clave' : 'Guardar') + '</button></div>', true);
@@ -1406,11 +1423,11 @@ function enlaceAlta() {
     'El administrador aprobará su acceso. Luego ingresará solo con su huella o rostro, sin claves.';
   const f = modal('<div class="mcab"><h3>🔗 Enlace de inscripción</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
     '<p class="cuenta">Envíe este enlace al personal. Cada persona solicita su acceso desde su celular y a usted le llega un aviso para aprobarla. No necesita códigos.</p>' +
-    '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">' +
-    (qrOk ? '<div id="eQr" style="width:150px;height:150px;flex:none;border:1px solid var(--linea,#dfe5ef);border-radius:10px;padding:6px;background:#fff">' + QR_ALTA.svg.replace('<svg ', '<svg width="100%" height="100%" role="img" aria-label="Código QR del enlace de inscripción" ') + '</div>' : '') +
-    '<div style="flex:1;min-width:200px"><div class="campo"><label>Enlace</label><input id="eUrl" readonly value="' + esc(url) + '"></div>' +
+    '<div data-st="display:flex;gap:16px;align-items:center;flex-wrap:wrap">' +
+    (qrOk ? '<div id="eQr" data-st="width:150px;height:150px;flex:none;border:1px solid var(--linea,#dfe5ef);border-radius:10px;padding:6px;background:#fff">' + QR_ALTA.svg.replace('<svg ', '<svg width="100%" height="100%" role="img" aria-label="Código QR del enlace de inscripción" ') + '</div>' : '') +
+    '<div data-st="flex:1;min-width:200px"><div class="campo"><label>Enlace</label><input id="eUrl" readonly value="' + esc(url) + '"></div>' +
     '<button class="btn" id="eCopUrl">📋 Copiar enlace</button></div></div>' +
-    '<div class="campo" style="margin-top:12px"><label>Mensaje (puede editarlo)</label><textarea id="eTxt" style="min-height:220px">' + esc(txt) + '</textarea></div>' +
+    '<div class="campo" data-st="margin-top:12px"><label>Mensaje (puede editarlo)</label><textarea id="eTxt" data-st="min-height:220px">' + esc(txt) + '</textarea></div>' +
     '<p class="cuenta">WhatsApp abre la lista de chats: elija el <b>grupo de la unidad</b> para enviarlo a todos a la vez.</p></div>' +
     '<div class="mpie">' + (qrOk ? '<button class="btn izq" id="eQrPng">⬇ Descargar QR</button>' : '') +
     '<button class="btn" id="eCopTxt">📋 Copiar mensaje</button>' +
@@ -1479,7 +1496,7 @@ async function cargarSolicitudes() {
       (x.aparatos ? '👆 Huella/rostro registrado (' + x.aparatos + ')' : '⚠ Sin huella/rostro registrado: tras aprobar, genérele una clave') + '</div>' +
       '<table><tr><th></th><th>Declarado</th><th>Padrón del administrador</th></tr>' + Object.keys(CAMPOS).map(k => '<tr><th>' + CAMPOS[k] + '</th><td' + (dif[k] ? ' class="dif"' : '') + '>' + esc(k === 'dependencia' ? corto(x[k]) : x[k]) + '</td><td>' +
         (x.padron ? esc(k === 'dependencia' ? corto(x.padron[k]) : x.padron[k]) || '—' : '<span class="cuenta">No figura</span>') + '</td></tr>').join('') + '</table>' +
-      (x.padron ? (x.discrepancias.length ? '<p class="dif">Hay diferencias: al aprobar se aplicarán los datos del padrón.</p>' : '<p style="color:var(--term)">✓ Coincide con el padrón.</p>') : '<p class="cuenta">No figura en el padrón: revise bien las fotos antes de aprobar.</p>') +
+      (x.padron ? (x.discrepancias.length ? '<p class="dif">Hay diferencias: al aprobar se aplicarán los datos del padrón.</p>' : '<p data-st="color:var(--term)">✓ Coincide con el padrón.</p>') : '<p class="cuenta">No figura en el padrón: revise bien las fotos antes de aprobar.</p>') +
       '<div class="selbar"><button class="btn" data-ver="fotoDniFrente" data-s="' + x.id + '">🪪 DNI anverso</button><button class="btn" data-ver="fotoDniReverso" data-s="' + x.id + '">🪪 DNI reverso</button><button class="btn" data-ver="fotoCarne" data-s="' + x.id + '">🎖 Carné FAP</button>' +
       '<button class="btn" data-rech="' + x.id + '">✖ Rechazar</button><button class="btn p" data-apr="' + x.id + '">✔ Aprobar…</button></div></div>';
   }).join('') : '<p class="cuenta">No hay solicitudes pendientes.</p>';
@@ -1546,7 +1563,7 @@ function pintarCargos() {
   const L = S.padron.filter(c => !q || [c.dni, c.grado, c.nombre, c.dependencia, c.cargo].join(' ').toLowerCase().indexOf(q) >= 0);
   $('#cCuenta').textContent = S.padron.length + ' personas en el padrón' + (q ? ' · ' + L.length + ' coinciden' : '') + '. Edite directamente en la tabla y pulse «Guardar cambios». Lo que diga el padrón prevalece sobre lo que declare cada persona.';
   const LIM = 400;
-  $('#cLista').innerHTML = L.slice(0, LIM).map(c => '<tr data-id="' + esc(c.id) + '" class="' + (S.padronMod[c.id] ? 'mod' : '') + '"><td><input data-k="dni" value="' + esc(c.dni) + '" maxlength="8" inputmode="numeric" style="width:92px"></td><td><input data-k="grado" value="' + esc(c.grado) + '" style="width:100px"></td><td><input data-k="nombre" value="' + esc(c.nombre) + '"></td>' +
+  $('#cLista').innerHTML = L.slice(0, LIM).map(c => '<tr data-id="' + esc(c.id) + '" class="' + (S.padronMod[c.id] ? 'mod' : '') + '"><td><input data-k="dni" value="' + esc(c.dni) + '" maxlength="8" inputmode="numeric" data-st="width:92px"></td><td><input data-k="grado" value="' + esc(c.grado) + '" data-st="width:100px"></td><td><input data-k="nombre" value="' + esc(c.nombre) + '"></td>' +
     '<td><select data-k="dependencia">' + opcionesDep(c.dependencia) + '</select></td><td><input data-k="cargo" value="' + esc(c.cargo) + '" list="pl_' + esc(c.id) + '"><datalist id="pl_' + esc(c.id) + '">' + (S.puestos[c.dependencia] || []).map(x => '<option value="' + esc(x) + '">').join('') + '</datalist></td>' +
     '<td><button class="btn" data-del title="Quitar del padrón">🗑</button></td></tr>').join('') + (L.length > LIM ? '<tr><td colspan="6" class="cuenta">Mostrando ' + LIM + ' de ' + L.length + '. Use el buscador.</td></tr>' : '');
   $$('#cLista tr[data-id]').forEach(tr => {
@@ -1593,9 +1610,9 @@ $('#cPdf').onchange = async () => {
   if (!j.ok) { toast(msgErr(j.error), true); return; }
   const filas = j.filas || [];
   const f = modal('<div class="mcab"><h3>Padrón leído del PDF (' + filas.length + ' filas)</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
-    (j.incompleto ? '<p class="dif" style="color:var(--venc)">⚠ El PDF es muy largo y la lectura quedó incompleta. Guarde estas filas con «Agregar» y luego cargue el resto del PDF por partes.</p>' : '') +
+    (j.incompleto ? '<p class="dif" data-st="color:var(--venc)">⚠ El PDF es muy largo y la lectura quedó incompleta. Guarde estas filas con «Agregar» y luego cargue el resto del PDF por partes.</p>' : '') +
     '<p class="cuenta">Revise la lectura antes de guardar. Las filas en amarillo tienen una dependencia que la IA no pudo ubicar en la organización: corríjala luego en la tabla.</p>' +
-    '<div class="tabwrap" style="max-height:50vh;overflow:auto"><table class="t"><thead><tr><th>DNI</th><th>Grado</th><th>Nombre</th><th>Dependencia</th><th>Puesto</th></tr></thead><tbody>' +
+    '<div class="tabwrap" data-st="max-height:50vh;overflow:auto"><table class="t"><thead><tr><th>DNI</th><th>Grado</th><th>Nombre</th><th>Dependencia</th><th>Puesto</th></tr></thead><tbody>' +
     filas.map(x => '<tr' + (x.dependencia ? '' : ' class="pend"') + '><td>' + esc(x.dni) + '</td><td>' + esc(x.grado) + '</td><td>' + esc(x.nombre) + '</td><td>' + esc(x.dependencia ? corto(x.dependencia) : x.dependenciaLeida || '—') + '</td><td>' + esc(x.cargo) + '</td></tr>').join('') +
     '</tbody></table></div></div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn" id="pdAgregar">Agregar al padrón actual</button><button class="btn p" id="pdReemplazar">Reemplazar todo el padrón</button></div>');
   const limpiar = () => filas.map(x => ({dni: x.dni, grado: x.grado, nombre: x.nombre, dependencia: x.dependencia, cargo: x.cargo}));
