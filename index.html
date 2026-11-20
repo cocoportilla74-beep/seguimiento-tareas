@@ -380,8 +380,8 @@ const ERRORES = {
   ia_sin_unidades: 'La IA no encontró en el MOF unidades con funciones relacionadas con esta tarea.',
   invitacion_invalida: 'DNI o código de invitación incorrecto, vencido o ya usado. Vuelva a intentarlo sin código o consulte al administrador.',
   ya_registrado: 'Este DNI ya tiene acceso. Ingrese con «Ingresar con huella o rostro». Si cambió de celular o computadora, pida al administrador un código para el nuevo equipo.',
-  solicitud_en_curso: 'Ya hay una solicitud en trámite con este DNI. Espere la aprobación del administrador o comuníquese con él.',
-  demasiados_intentos: 'Demasiados intentos con este DNI. Espere una hora e inténtelo de nuevo.',
+  solicitud_en_curso: 'Su solicitud ya fue enviada y está esperando la aprobación del administrador. Cuando lo aprueben, entre con «Ingresar con huella o rostro».',
+  demasiados_intentos: 'Demasiados intentos con este DNI. Espere una hora e inténtelo de nuevo, o comuníquese con el administrador.',
   muchas_solicitudes: 'Hay muchas solicitudes en este momento. Inténtelo de nuevo en una hora.',
   registro_invalido: 'No se pudo registrar este aparato. Intente de nuevo o use otro navegador actualizado.',
   biometria_no_registrada: 'Esta huella o rostro no está registrado en el sistema. Use su código y clave, o pida una invitación.',
@@ -1145,6 +1145,7 @@ $('#bBioReg').onclick = () => {
     '<div class="campo"><label>DNI *</label><input id="rDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>' +
     '<p style="margin:6px 0 0"><a href="#" id="rConCod" style="font-size:13px">Tengo un código del administrador</a></p>' +
     '<div class="campo oculto" id="rCodCaja"><label>Código del administrador</label><input id="rInv" maxlength="9" placeholder="XXXX-XXXX" style="text-transform:uppercase"></div>' +
+    '<p class="oculto" id="rEst" style="margin:10px 0 0;padding:10px 12px;border-radius:8px;background:#eef3fb;color:#0b2a5b;font-weight:600">⏳ Preparando su formulario de inscripción… Espere unos segundos y no cierre esta ventana. No le llegará ningún código: el sistema lo genera solo.</p>' +
     '<div class="err" id="rErr" style="color:var(--venc)"></div>' +
     '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="rIr">Continuar</button></div>', true);
   formatear(f.querySelector('#rInv'), [4, 4]);
@@ -1156,14 +1157,19 @@ $('#bBioReg').onclick = () => {
     if (!/^\d{8}$/.test(dni)) { err.textContent = 'Escriba su DNI (8 dígitos).'; return; }
     if (inv && inv.replace(/-/g, '').length !== 8) { err.textContent = 'El código del administrador tiene 8 caracteres (XXXX-XXXX).'; return; }
     b.disabled = true; err.textContent = '';
-    if (!inv) {
-      const s = await api('solicitarAcceso', {dni: dni, dispositivo: navigator.userAgent.slice(0, 150)});
-      if (!s.ok) { b.disabled = false; err.textContent = msgErr(s.error); return; }
-      inv = s.invitacion;
-    }
-    const info = await api('invitacionInfo', {dni: dni, invitacion: inv, dispositivo: navigator.userAgent.slice(0, 150)});
-    b.disabled = false;
-    if (!info.ok) { err.textContent = msgErr(info.error); return; }
+    const est = f.querySelector('#rEst'); est.classList.remove('oculto');
+    b.textContent = 'Preparando…';
+    let info;
+    try {
+      if (!inv) {
+        const s = await api('solicitarAcceso', {dni: dni, dispositivo: navigator.userAgent.slice(0, 150)});
+        if (!s.ok) { err.textContent = msgErr(s.error); return; }
+        inv = s.invitacion;
+        if (s.arbol) info = s;
+      }
+      if (!info) info = await api('invitacionInfo', {dni: dni, invitacion: inv, dispositivo: navigator.userAgent.slice(0, 150)});
+      if (!info.ok) { err.textContent = msgErr(info.error); return; }
+    } finally { b.disabled = false; b.textContent = 'Continuar'; est.classList.add('oculto'); }
     cerrar(f);
     if (info.nuevo && !info.solicitudEnviada) formularioAlta(dni, inv, info);
     else registrarAparato(dni, inv, info.nuevo);
