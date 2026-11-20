@@ -153,6 +153,8 @@ table.t tr.mod td{background:#eef6ff}
 .fotos3 label.ok{border-color:var(--term);border-style:solid}
 .fotos3 img{max-width:100%;max-height:90px;border-radius:6px}
 .fotos3 input{display:none}
+.pdatos{font-size:13px;line-height:1.45;background:#eef7f0;border:1px solid #b9dcc3;color:#1d3b26;border-radius:8px;padding:8px 10px;margin:10px 0 0}
+.pdatos ul{margin:6px 0 0;padding-left:18px}.pdatos li{margin:3px 0}
 .consent{display:flex;gap:8px;align-items:flex-start;font-size:13px;background:#f7f9fc;border:1px solid var(--borde);border-radius:8px;padding:8px;margin-top:8px}
 .consent input{width:auto;margin-top:3px}
 @media (max-width:600px){.fotos3{grid-template-columns:1fr}}
@@ -1142,6 +1144,7 @@ $('#bBio').onclick = async () => {
 $('#bBioReg').onclick = () => {
   const f = modal('<div class="mcab"><h3>Solicitar acceso</h3><button data-cerrar>×</button></div><div class="mcuerpo" id="rCuerpo">' +
     '<p class="cuenta">Ingrese su DNI. Luego completará sus datos, las fotos de su DNI y carné FAP, y registrará su huella o rostro en este equipo. El administrador aprobará su acceso.</p>' +
+    '<p class="pdatos">🔒 <b>Protección de datos personales:</b> sus datos se tratan conforme a la Ley N.° 29733, Ley de Protección de Datos Personales, y su Reglamento (D.S. N.° 016-2024-JUS). Las fotos de su DNI y carné FAP solo sirven para verificar su identidad y <b>se eliminan definitivamente al terminar su alta</b>.</p>' +
     '<div class="campo"><label>DNI *</label><input id="rDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>' +
     '<p style="margin:6px 0 0"><a href="#" id="rConCod" style="font-size:13px">Tengo un código del administrador</a></p>' +
     '<div class="campo oculto" id="rCodCaja"><label>Código del administrador</label><input id="rInv" maxlength="9" placeholder="XXXX-XXXX" style="text-transform:uppercase"></div>' +
@@ -1190,6 +1193,12 @@ function formularioAlta(dni, inv, info) {
     '<input id="aPuestoOtro" class="oculto" maxlength="120" placeholder="Escriba su puesto" style="margin-top:6px"></div>' +
     '<label style="margin-top:10px;display:block;font-weight:bold;font-size:13px">Fotos (tómelas de cerca, con buena luz y sin reflejos) *</label>' +
     '<div class="fotos3">' + Object.keys(ETQ).map(k => '<label id="l_' + k + '"><span>' + ETQ[k] + '<br><small>Tocar para tomar o elegir</small></span><input type="file" accept="image/*" capture="environment" data-k="' + k + '"></label>').join('') + '</div>' +
+    '<div class="pdatos"><b>🔒 Tratamiento de sus datos personales</b> (Ley N.° 29733 y su Reglamento, D.S. N.° 016-2024-JUS)<ul>' +
+    '<li><b>Finalidad:</b> verificar su identidad y darle de alta en el sistema de seguimiento de tareas del Grupo Aéreo N.° 7.</li>' +
+    '<li><b>Fotos del DNI y carné FAP:</b> solo las ve el administrador para verificarlas y <b>se eliminan definitivamente</b> al aprobar o rechazar su solicitud.</li>' +
+    '<li><b>Se conservan</b> solo su DNI, grado, nombre, dependencia y puesto, para administrar su cuenta y sus tareas.</li>' +
+    '<li><b>Huella o rostro:</b> no se envían ni se guardan en el sistema; quedan solo en su celular.</li>' +
+    '<li>Puede pedir al administrador la corrección o eliminación de sus datos.</li></ul></div>' +
     '<label class="consent"><input type="checkbox" id="aOk"><span>' + esc(info.consentimiento) + '</span></label>' +
     '<div class="err" id="aErr" style="color:var(--venc);margin-top:8px"></div>' +
     '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="aEnviar">Enviar solicitud</button></div>');
@@ -1239,6 +1248,7 @@ function formularioAlta(dni, inv, info) {
 }
 function avisoPendiente(conHuella) {
   const f = modal('<div class="mcab"><h3>Solicitud enviada</h3></div><div class="mcuerpo"><p>✅ Su solicitud de alta fue enviada al administrador.</p>' +
+    '<p class="pdatos">🔒 En cumplimiento de la Ley N.° 29733, las fotos de su DNI y carné FAP <b>se eliminarán definitivamente</b> en cuanto el administrador termine de revisar su alta.</p>' +
     (conHuella ? '<p>Su huella o rostro quedó registrado en este aparato. <b>Cuando el administrador apruebe su solicitud</b>, ingrese con «👆 Ingresar con huella o rostro».</p>'
                : '<p>Este aparato no permite ingresar con huella o rostro. Cuando el administrador apruebe su solicitud, le entregará una clave personal.</p>') +
     '</div><div class="mpie"><button class="btn p" data-cerrar>Entendido</button></div>', true);
