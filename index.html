@@ -229,7 +229,7 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
     <button class="btn p ancho" id="bLogin" type="submit">Ingresar</button>
     </div>
     <div class="err" id="lErr"></div>
-    <button type="button" class="btn ancho" id="bBioReg" style="margin-top:12px">🆕 Tengo una invitación (registrarme)</button>
+    <button type="button" class="btn ancho" id="bBioReg" style="margin-top:12px">🆕 Solicitar acceso (primera vez)</button>
     <div class="pie">Uso exclusivo del personal autorizado. Cada acceso queda registrado.</div>
   </form>
 </section>
@@ -376,7 +376,11 @@ const ERRORES = {
   solo_jefe: 'Solo el jefe de la dependencia (o el administrador) puede solicitar el levantamiento.',
   ia_error: 'La IA no pudo completar la revisión. Intente de nuevo en unos minutos.',
   ia_sin_unidades: 'La IA no encontró en el MOF unidades con funciones relacionadas con esta tarea.',
-  invitacion_invalida: 'DNI o código de invitación incorrecto, vencido o ya usado. Pida una nueva invitación al administrador.',
+  invitacion_invalida: 'DNI o código de invitación incorrecto, vencido o ya usado. Vuelva a intentarlo sin código o consulte al administrador.',
+  ya_registrado: 'Este DNI ya tiene acceso. Ingrese con «Ingresar con huella o rostro». Si cambió de celular o computadora, pida al administrador un código para el nuevo equipo.',
+  solicitud_en_curso: 'Ya hay una solicitud en trámite con este DNI. Espere la aprobación del administrador o comuníquese con él.',
+  demasiados_intentos: 'Demasiados intentos con este DNI. Espere una hora e inténtelo de nuevo.',
+  muchas_solicitudes: 'Hay muchas solicitudes en este momento. Inténtelo de nuevo en una hora.',
   registro_invalido: 'No se pudo registrar este aparato. Intente de nuevo o use otro navegador actualizado.',
   biometria_no_registrada: 'Esta huella o rostro no está registrado en el sistema. Use su código y clave, o pida una invitación.',
   biometria_desactivada: 'El acceso con huella o rostro está desactivado para usted. Use su código y clave.',
@@ -1134,18 +1138,27 @@ $('#bBio').onclick = async () => {
   } finally { b.disabled = false; }
 };
 $('#bBioReg').onclick = () => {
-  const f = modal('<div class="mcab"><h3>Registrarme con mi invitación</h3><button data-cerrar>×</button></div><div class="mcuerpo" id="rCuerpo">' +
-    '<p class="cuenta">Ingrese su DNI y el código de invitación que le entregó el administrador (sirve una sola vez y vence en 3 días).</p>' +
-    '<div class="fila2"><div class="campo"><label>DNI *</label><input id="rDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>' +
-    '<div class="campo"><label>Código de invitación *</label><input id="rInv" maxlength="9" placeholder="XXXX-XXXX" style="text-transform:uppercase"></div></div>' +
+  const f = modal('<div class="mcab"><h3>Solicitar acceso</h3><button data-cerrar>×</button></div><div class="mcuerpo" id="rCuerpo">' +
+    '<p class="cuenta">Ingrese su DNI. Luego completará sus datos, las fotos de su DNI y carné FAP, y registrará su huella o rostro en este equipo. El administrador aprobará su acceso.</p>' +
+    '<div class="campo"><label>DNI *</label><input id="rDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>' +
+    '<p style="margin:6px 0 0"><a href="#" id="rConCod" style="font-size:13px">Tengo un código del administrador</a></p>' +
+    '<div class="campo oculto" id="rCodCaja"><label>Código del administrador</label><input id="rInv" maxlength="9" placeholder="XXXX-XXXX" style="text-transform:uppercase"></div>' +
     '<div class="err" id="rErr" style="color:var(--venc)"></div>' +
     '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="rIr">Continuar</button></div>', true);
   formatear(f.querySelector('#rInv'), [4, 4]);
   f.querySelector('#rDni').addEventListener('input', e => e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8));
+  f.querySelector('#rConCod').onclick = e => { e.preventDefault(); f.querySelector('#rCodCaja').classList.remove('oculto'); e.target.classList.add('oculto'); f.querySelector('#rInv').focus(); };
   f.querySelector('#rIr').onclick = async () => {
-    const dni = f.querySelector('#rDni').value, inv = f.querySelector('#rInv').value, err = f.querySelector('#rErr'), b = f.querySelector('#rIr');
-    if (!/^\d{8}$/.test(dni) || inv.replace(/-/g, '').length !== 8) { err.textContent = 'Complete el DNI (8 dígitos) y el código de invitación.'; return; }
+    const dni = f.querySelector('#rDni').value, err = f.querySelector('#rErr'), b = f.querySelector('#rIr');
+    let inv = f.querySelector('#rInv').value;
+    if (!/^\d{8}$/.test(dni)) { err.textContent = 'Escriba su DNI (8 dígitos).'; return; }
+    if (inv && inv.replace(/-/g, '').length !== 8) { err.textContent = 'El código del administrador tiene 8 caracteres (XXXX-XXXX).'; return; }
     b.disabled = true; err.textContent = '';
+    if (!inv) {
+      const s = await api('solicitarAcceso', {dni: dni, dispositivo: navigator.userAgent.slice(0, 150)});
+      if (!s.ok) { b.disabled = false; err.textContent = msgErr(s.error); return; }
+      inv = s.invitacion;
+    }
     const info = await api('invitacionInfo', {dni: dni, invitacion: inv, dispositivo: navigator.userAgent.slice(0, 150)});
     b.disabled = false;
     if (!info.ok) { err.textContent = msgErr(info.error); return; }
@@ -1339,7 +1352,7 @@ function abrirUsuario(u) {
 }
 function mostrarInvitacion(u, cod, vence, nuevo) {
   const etq = [u.grado, u.nombre].filter(Boolean).join(' ') || 'DNI ' + (u.dni || '');
-  const msg = 'Seguimiento de Tareas ' + S.base + ' | ' + etq + ' | Abra ' + location.origin + location.pathname + ' en su celular o computadora, pulse «Tengo una invitación (registrarme)», ingrese su DNI y este código: ' + cod +
+  const msg = 'Seguimiento de Tareas ' + S.base + ' | ' + etq + ' | Abra ' + location.origin + location.pathname + ' en su celular o computadora, pulse «Solicitar acceso (primera vez)», ingrese su DNI, toque «Tengo un código del administrador» y escriba: ' + cod +
     (nuevo ? '. Tenga a la mano su DNI y su carné FAP para fotografiarlos' : '') + '. Un solo uso; vence el ' + fFechaHora(vence) + '. No lo comparta.';
   const f = modal('<div class="mcab"><h3>Código de invitación</h3></div><div class="mcuerpo"><p><b>' + esc(etq) + '</b> · DNI ' + esc(u.dni || '') + '</p><div class="clave">' + esc(cod) + '</div><p class="cuenta">Sirve <b>una sola vez</b> y vence el ' + fFechaHora(vence) + '. Entréguelo en persona o por un medio seguro: <b>no se volverá a mostrar</b>.</p></div><div class="mpie"><button class="btn" id="iCopiar">Copiar mensaje para entregar</button><button class="btn p" data-cerrar>Listo</button></div>', true);
   f.querySelector('#iCopiar').onclick = () => navigator.clipboard.writeText(msg).then(() => toast('Mensaje copiado'), () => toast('No se pudo copiar; anote el código.', true));
