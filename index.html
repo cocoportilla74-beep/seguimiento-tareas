@@ -144,6 +144,37 @@ table.t tr.baja td{color:#9ca3af}
   .dep{grid-template-columns:1fr 52px 64px 44px;gap:6px;font-size:13px}.dep .av{display:none}
   .lista{grid-template-columns:1fr}.fondo{padding:0}.modal{border-radius:0;min-height:100vh}
 }
+.selbox{border:1px solid var(--borde);border-radius:8px;background:#fff}
+.selbox input[type=search]{border:0;border-bottom:1px solid var(--borde);border-radius:8px 8px 0 0;padding:8px 10px;width:100%}
+.selbox .ops{max-height:210px;overflow-y:auto;padding:4px 6px}
+.campo .selbox label,.selbox label{display:flex;flex-direction:row;align-items:center;gap:7px;padding:3px 4px;font-size:13.5px;border-radius:5px;cursor:pointer;text-transform:none;font-weight:normal;color:var(--txt)}
+.campo label.chk{flex-direction:row;text-transform:none;font-weight:normal;color:var(--txt);font-size:13.5px}
+.campo input[type=checkbox],.selbox input[type=checkbox]{width:auto;flex:none;margin:0}
+.selbox label:hover{background:#f3f6fb}
+.selbox .gr{font-size:11px;font-weight:bold;color:var(--gris);text-transform:uppercase;padding:6px 4px 2px}
+.selbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.selbar button{border:1px solid var(--borde);background:#fff;border-radius:14px;padding:3px 10px;font-size:12.5px;color:var(--azul)}
+.selbar button:hover{background:var(--azulc)}
+.selbox .gr{cursor:pointer}
+.selbox .gr:hover{color:var(--azul)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chips span{background:var(--azulc);color:var(--azul);border-radius:12px;padding:2px 9px;font-size:12.5px}
+.nodo{display:grid;grid-template-columns:minmax(230px,2.2fr) 1.3fr 56px 62px 50px;gap:10px;align-items:center;padding:6px 6px;border-bottom:1px solid #eef1f5;font-size:14px}
+.nodo:hover{background:#f6f8fb}
+.nodo .nm{display:flex;align-items:center;gap:6px;min-width:0}
+.nodo .nm b{font-weight:600;cursor:pointer;color:var(--azul);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nodo .nm b:hover{text-decoration:underline}
+.tg{width:22px;height:22px;flex:none;border:1px solid var(--borde);border-radius:5px;background:#fff;font-size:11px;line-height:1;padding:0;color:var(--azul)}
+.tg.v{visibility:hidden}
+.pers{font-size:12px;color:var(--gris);padding:2px 6px 8px;border-bottom:1px solid #eef1f5}
+.pers span{display:inline-block;background:#f1f4f9;border-radius:10px;padding:1px 8px;margin:2px 3px 0 0}
+.docs{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.doc{display:flex;align-items:center;gap:10px;border:1px solid var(--borde);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
+.doc .n{flex:1;min-width:0}
+.doc .n b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc .n small{color:var(--gris)}
+.ext{flex:none;width:42px;height:42px;border-radius:7px;background:var(--azul);color:#fff;font-weight:bold;font-size:11px;display:grid;place-items:center;text-transform:uppercase}
+@media (max-width:760px){.nodo{grid-template-columns:1fr 44px 44px 44px;font-size:13px}.nodo .av{display:none}}
 @media print{header,nav.tabs,.flot,.filtros{display:none}body{background:#fff}}
 </style>
 </head>
@@ -266,10 +297,13 @@ const ERRORES = {
   rol_invalido: 'Elija un rol válido.', usuario_no_existe: 'El usuario no existe.',
   no_puede_quitarse_admin: 'No puede quitarse a sí mismo el rol de administrador ni darse de baja.',
   error_servidor: 'Error en el servidor. Intente nuevamente en un momento.',
-  red: 'No hay conexión con el servidor. Revise su internet.'
+  red: 'No hay conexión con el servidor. Revise su internet.',
+  archivo_invalido: 'Tipo de archivo no permitido. Use PDF, Word, Excel, PowerPoint, imágenes, TXT, CSV o ZIP.',
+  archivo_muy_grande: 'El archivo supera los 15 MB.',
+  archivo_no_existe: 'El documento ya no existe.'
 };
 
-const S = {token: '', usuario: null, permisos: {}, base: '', deps: [], grupos: [], arbol: [], vigenteHasta: '',
+const S = {token: '', usuario: null, permisos: {}, base: '', deps: [], grupos: [], arbol: [], personal: [], documentos: [], abiertos: {}, vigenteHasta: '',
            tareas: [], bitacora: [], fotos: [], usuarios: [], vista: 'panel', servidor: ''};
 const IMG = {}; // caché de imágenes: id+tam -> dataURL
 const $ = s => document.querySelector(s);
@@ -282,6 +316,10 @@ function diasA(fin) { if (!fin) return null; const a = new Date(hoyISO() + 'T00:
 const SEP = ' › ';
 function dentro(a, d) { return a === d || String(a).indexOf(d + SEP) === 0; }
 function corto(r) { const p = String(r || '').split(SEP); return p.length > 2 ? p[0] + ' › … › ' + p[p.length - 1] : p.join(SEP); }
+function areasT(t) { return String(t.area || '').split('\n').filter(Boolean); }
+function enRama(t, d) { return areasT(t).some(a => dentro(a, d)); }
+function depTxt(t) { const L = areasT(t); return L.length ? corto(L[0]) + (L.length > 1 ? ' (+' + (L.length - 1) + ' más)' : '') : '—'; }
+function hijos(ruta) { const n = ruta.split(SEP).length; return S.arbol.filter(x => x.ruta.indexOf(ruta + SEP) === 0 && x.ruta.split(SEP).length === n + 1); }
 function activa(t) { return t.estado !== 'terminada' && t.estado !== 'cancelada'; }
 function vencida(t) { const d = diasA(t.fin); return activa(t) && d !== null && d < 0; }
 function fFecha(iso) { if (!iso) return '—'; const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + 'T00:00:00') : new Date(iso); if (isNaN(d)) return esc(iso); return d.toLocaleDateString('es-PE', {day: '2-digit', month: '2-digit', year: 'numeric'}); }
@@ -356,6 +394,7 @@ async function entrar() {
   $('#hRol').textContent = ROLES[u.rol] || u.rol;
   $('#tabUsuarios').classList.toggle('oculto', !S.permisos.gestionarUsuarios);
   llenarSelectDeps($('#fDep'), true);
+  await cargarPersonal();
   await recargar();
   cambiarVista(S.vista);
 }
@@ -370,11 +409,16 @@ function cerrarSesion(expirada) {
 $('#bSalir').onclick = () => cerrarSesion(false);
 
 /* ---------- datos ---------- */
+async function cargarPersonal() {
+  const j = await api('personal');
+  if (j.ok) S.personal = j.personal || [];
+}
+function etiquetaP(p) { return [p.grado, p.nombre].filter(Boolean).join(' '); }
 async function recargar(silencioso) {
   const j = await api('listar');
   if (!j.ok) { if (j.error !== 'sesion_invalida' && !silencioso) toast(msgErr(j.error), true); return false; }
   aplicarSesion(j);
-  S.tareas = j.tareas || []; S.bitacora = j.bitacora || []; S.fotos = j.fotos || []; S.servidor = j.servidor;
+  S.tareas = j.tareas || []; S.bitacora = j.bitacora || []; S.fotos = j.fotos || []; S.documentos = j.documentos || []; S.servidor = j.servidor;
   pintarPanel(); pintarLista();
   return true;
 }
@@ -423,19 +467,9 @@ function pintarPanel() {
   $('#kpis').innerHTML = k.map((x, i) => '<div class="kpi" data-i="' + i + '" style="border-left-color:' + x.c + '"><div class="n" style="color:' + x.c + '">' + x.n + '</div><div class="l">' + x.l + '</div></div>').join('');
   $$('#kpis .kpi').forEach(el => el.onclick = () => irATareas(k[+el.dataset.i].f));
 
-  let h = '<div class="dep cab"><span>Dependencia</span><span class="av">Avance promedio (activas)</span><span class="num">Activas</span><span class="num">Vencidas</span><span class="num">Total</span></div>';
-  S.grupos.forEach((g, gi) => {
-    h += '<div class="grupo"><i style="background:' + COLOR_GRUPO[gi % 5] + '"></i>' + esc(g.grupo) + '</div>';
-    g.dependencias.forEach(d => {
-      const td = T.filter(t => dentro(t.area, d)), ta = td.filter(activa), tv = td.filter(vencida);
-      const prom = ta.length ? Math.round(ta.reduce((s, t) => s + (+t.avance || 0), 0) / ta.length) : (td.length ? 100 : 0);
-      h += '<div class="dep" data-d="' + esc(d) + '"><span>' + esc(d) + '</span><span class="av"><div class="barra"><span style="width:' + prom + '%"></span></div><small style="color:var(--gris)">' + (td.length ? prom + '%' : 'sin tareas') + '</small></span><span class="num">' + ta.length + '</span><span class="num' + (tv.length ? ' rojo' : '') + '">' + tv.length + '</span><span class="num">' + td.length + '</span></div>';
-    });
-  });
-  $('#porDep').innerHTML = h;
-  $$('#porDep .dep[data-d]').forEach(el => el.onclick = () => irATareas({dep: el.dataset.d}));
+  pintarArbol();
 
-  const fila = t => '<div class="prox" data-id="' + esc(t.id) + '">' + chip(t.estado) + '<span class="t"><b>' + esc(t.titulo) + '</b><br><small style="color:var(--gris)">' + esc(corto(t.area)) + ' · ' + esc(t.responsable || 'sin responsable') + '</small></span>' + plazoTxt(t) + '</div>';
+  const fila = t => '<div class="prox" data-id="' + esc(t.id) + '">' + chip(t.estado) + '<span class="t"><b>' + esc(t.titulo) + '</b><br><small style="color:var(--gris)">' + esc(depTxt(t)) + ' · ' + esc(t.responsable || 'sin responsable') + '</small></span>' + plazoTxt(t) + '</div>';
   const vs = ven.sort((a, b) => a.fin.localeCompare(b.fin));
   $('#vencidas').innerHTML = vs.length ? vs.slice(0, 8).map(fila).join('') + (vs.length > 8 ? '<p class="cuenta">… y ' + (vs.length - 8) + ' más. <a href="#" id="verVenc">Ver todas</a></p>' : '') : '<p class="cuenta">✓ No hay tareas vencidas.</p>';
   const px = act.filter(t => { const d = diasA(t.fin); return d !== null && d >= 0 && d <= 7; }).sort((a, b) => a.fin.localeCompare(b.fin));
@@ -445,6 +479,35 @@ function pintarPanel() {
   $('#actualizado').textContent = 'Datos al ' + fFechaHora(S.servidor) + (S.vigenteHasta ? ' · Código del período vigente hasta el ' + fFechaHora(S.vigenteHasta) : '') + '. Se actualiza solo cada 2 minutos.';
 }
 
+/* Árbol interactivo: ▸ abre o cierra la unidad; clic en el nombre muestra sus tareas; 👤 muestra el personal. */
+function pintarArbol() {
+  const T = S.tareas;
+  const nodo = (x, gi) => {
+    const td = T.filter(t => enRama(t, x.ruta)), ta = td.filter(activa), tv = td.filter(vencida);
+    const prom = ta.length ? Math.round(ta.reduce((s, t) => s + (+t.avance || 0), 0) / ta.length) : (td.length ? 100 : 0);
+    const hs = hijos(x.ruta), ab = !!S.abiertos[x.ruta];
+    const per = S.personal.filter(p => p.dependencia === x.ruta), perR = S.personal.filter(p => dentro(p.dependencia, x.ruta));
+    let h = '<div class="nodo" style="padding-left:' + (6 + x.nivel * 22) + 'px"><span class="nm"><button class="tg' + (hs.length || per.length ? '' : ' v') + '" data-tg="' + esc(x.ruta) + '" aria-label="Abrir o cerrar">' + (ab ? '▾' : '▸') + '</button><b data-d="' + esc(x.ruta) + '" title="Ver tareas de ' + esc(x.ruta) + '">' + esc(x.nombre) + '</b>' + (perR.length ? '<small style="color:var(--gris);white-space:nowrap">👤 ' + perR.length + '</small>' : '') + '</span>' +
+      '<span class="av"><div class="barra"><span style="width:' + prom + '%"></span></div><small style="color:var(--gris)">' + (td.length ? prom + '%' : 'sin tareas') + '</small></span><span class="num">' + ta.length + '</span><span class="num' + (tv.length ? ' rojo' : '') + '">' + tv.length + '</span><span class="num">' + td.length + '</span></div>';
+    if (ab) {
+      if (per.length) h += '<div class="pers" style="padding-left:' + (34 + x.nivel * 22) + 'px">Personal: ' + per.map(p => '<span>' + esc(etiquetaP(p)) + (p.rol === 'jefe' ? ' (jefe)' : p.rol === 'admin' ? ' (admin)' : '') + '</span>').join('') + '</div>';
+      hs.forEach(c => { h += nodo(c, gi); });
+    }
+    return h;
+  };
+  let h = '<div class="nodo dep cab"><span>Dependencia</span><span class="av">Avance promedio (activas)</span><span class="num">Activas</span><span class="num">Vencidas</span><span class="num">Total</span></div>';
+  S.grupos.forEach((g, gi) => {
+    h += '<div class="grupo"><i style="background:' + COLOR_GRUPO[gi % 5] + '"></i>' + esc(g.grupo) + '</div>';
+    S.arbol.filter(x => x.grupo === g.grupo && x.nivel === 0).forEach(x => { h += nodo(x, gi); });
+  });
+  h += '<p class="cuenta" style="margin-top:8px">▸ abre cada unidad · clic en el nombre para ver sus tareas · 👤 personal registrado. <a href="#" id="abrirTodo">Abrir todo</a> · <a href="#" id="cerrarTodo">Cerrar todo</a></p>';
+  $('#porDep').innerHTML = h;
+  $$('#porDep [data-tg]').forEach(b => b.onclick = () => { S.abiertos[b.dataset.tg] = !S.abiertos[b.dataset.tg]; pintarArbol(); });
+  $$('#porDep b[data-d]').forEach(el => el.onclick = () => irATareas({dep: el.dataset.d}));
+  $('#abrirTodo').onclick = e => { e.preventDefault(); S.arbol.forEach(x => S.abiertos[x.ruta] = true); pintarArbol(); };
+  $('#cerrarTodo').onclick = e => { e.preventDefault(); S.abiertos = {}; pintarArbol(); };
+}
+
 /* ---------- lista de tareas ---------- */
 ['#fTexto', '#fDep', '#fEstado', '#fPrio', '#fVenc', '#fMia', '#fOrden'].forEach(s => $(s).addEventListener('input', pintarLista));
 function filtradas() {
@@ -452,9 +515,9 @@ function filtradas() {
   const pv = {Alta: 0, Media: 1, Baja: 2};
   let L = S.tareas.filter(t =>
     (!q || (t.titulo + ' ' + t.responsable + ' ' + t.descripcion + ' ' + t.id).toLowerCase().indexOf(q) >= 0) &&
-    (!dep || dentro(t.area, dep)) && (!pr || t.prioridad === pr) &&
+    (!dep || enRama(t, dep)) && (!pr || t.prioridad === pr) &&
     (!est || (est === 'activas' ? activa(t) : t.estado === est)) &&
-    (!$('#fVenc').checked || vencida(t)) && (!$('#fMia').checked || dentro(t.area, S.usuario.dependencia)));
+    (!$('#fVenc').checked || vencida(t)) && (!$('#fMia').checked || enRama(t, S.usuario.dependencia)));
   const o = $('#fOrden').value;
   L.sort((a, b) => {
     if (o === 'act') return (b.actualizado || '').localeCompare(a.actualizado || '');
@@ -469,12 +532,12 @@ function pintarLista() {
   $('#cuenta').textContent = L.length + ' de ' + S.tareas.length + ' tareas';
   if (!L.length) { $('#lista').innerHTML = '<div class="vacio">No hay tareas con estos filtros.' + (S.tareas.length ? '' : '<br>Use <b>＋ Nueva tarea</b> para registrar la primera.') + '</div>'; return; }
   $('#lista').innerHTML = L.map(t => {
-    const nf = S.fotos.filter(f => f.taskId === t.id).length, col = vencida(t) ? 'var(--venc)' : (ESTADOS[t.estado] || ESTADOS.pendiente).c;
+    const nf = S.fotos.filter(f => f.taskId === t.id).length, nd = S.documentos.filter(d => d.taskId === t.id).length, col = vencida(t) ? 'var(--venc)' : (ESTADOS[t.estado] || ESTADOS.pendiente).c;
     return '<div class="tarea" data-id="' + esc(t.id) + '" style="border-top-color:' + col + '">' +
       '<div class="h"><h4>' + esc(t.titulo) + '</h4>' + chip(t.estado) + '</div>' +
-      '<div class="meta"><span title="' + esc(t.area) + '">🏢 ' + esc(corto(t.area)) + '</span><span>👤 ' + esc(t.responsable || 'Sin responsable') + '</span><span class="prio ' + esc(t.prioridad) + '">' + esc(t.prioridad) + '</span></div>' +
+      '<div class="meta"><span title="' + esc(areasT(t).join('\n')) + '">🏢 ' + esc(depTxt(t)) + '</span><span>👤 ' + esc(t.responsable || 'Sin responsable') + '</span><span class="prio ' + esc(t.prioridad) + '">' + esc(t.prioridad) + '</span></div>' +
       '<div class="rango"><div class="barra" style="flex:1"><span style="width:' + (+t.avance || 0) + '%;background:' + col + '"></span></div><b style="font-size:13px">' + (+t.avance || 0) + '%</b></div>' +
-      '<div class="meta" style="justify-content:space-between">' + plazoTxt(t) + '<span>' + (nf ? '📷 ' + nf : '') + (t.editable ? '' : ' 🔒') + '</span></div></div>';
+      '<div class="meta" style="justify-content:space-between">' + plazoTxt(t) + '<span>' + (nf ? '📷 ' + nf + ' ' : '') + (nd ? '📎 ' + nd : '') + (t.editable ? '' : ' 🔒') + '</span></div></div>';
   }).join('');
   $$('#lista .tarea').forEach(el => el.onclick = () => abrirTarea(el.dataset.id));
 }
@@ -484,7 +547,7 @@ $('#bCsv').onclick = () => {
   const L = filtradas(), cols = ['id', 'titulo', 'area', 'responsable', 'prioridad', 'estado', 'avance', 'inicio', 'fin', 'creadoPor', 'actualizado', 'actualizadoPor', 'terminadoEl', 'descripcion'];
   const cab = ['ID', 'Título', 'Dependencia', 'Responsable', 'Prioridad', 'Estado', 'Avance %', 'Inicio', 'Fecha límite', 'Registrado por', 'Última actualización', 'Actualizado por', 'Terminada el', 'Descripción'];
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const filas = L.map(t => cols.map(c => c === 'estado' ? (ESTADOS[t[c]] || {}).n : (c === 'actualizado' || c === 'terminadoEl') && t[c] ? fFechaHora(t[c]) : t[c]).map(q).join(';'));
+  const filas = L.map(t => cols.map(c => c === 'area' ? areasT(t).join(' | ') : c === 'estado' ? (ESTADOS[t[c]] || {}).n : (c === 'actualizado' || c === 'terminadoEl') && t[c] ? fFechaHora(t[c]) : t[c]).map(q).join(';'));
   const blob = new Blob(['﻿' + [cab.map(q).join(';')].concat(filas).join('\r\n')], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tareas_' + hoyISO() + '.csv';
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
@@ -518,19 +581,19 @@ function abrirTarea(id) {
   const v = t || {titulo: '', descripcion: '', area: u.dependencia, responsable: '', prioridad: 'Media', estado: 'pendiente', inicio: hoyISO(), fin: '', avance: '0'};
   const dis = puede ? '' : ' disabled';
   const opt = (o, val) => Object.keys(o).map(k => '<option value="' + k + '"' + (k === val ? ' selected' : '') + '>' + esc(o[k].n || o[k]) + '</option>').join('');
-  const rama = S.permisos.editarTodas ? '' : u.dependencia;
-  const conSel = puede && S.arbol.filter(x => !rama || dentro(x.ruta, rama)).length > 1;
-  const depCampo = conSel ? '<select id="tArea"></select><small id="tRuta" style="color:var(--gris)">' + esc(v.area) + '</small>' : '<div class="solo">' + esc(v.area) + '</div>';
-  const nF = t ? S.fotos.filter(f => f.taskId === t.id).length : 0, nB = t ? S.bitacora.filter(b => b.taskId === t.id).length : 0;
+  const selAreas = areasT(v), respL = String(v.responsable || '').split(';').map(x => x.trim()).filter(Boolean);
+  const nF = t ? S.fotos.filter(f => f.taskId === t.id).length + S.documentos.filter(d => d.taskId === t.id).length : 0, nB = t ? S.bitacora.filter(b => b.taskId === t.id).length : 0;
   const f = modal(
     '<div class="mcab"><h3>' + (nueva ? 'Nueva tarea' : esc(t.titulo)) + '</h3><button data-cerrar title="Cerrar">×</button></div>' +
-    (nueva ? '' : '<div class="mtabs"><button class="on" data-t="datos">Datos</button><button data-t="bit">Bitácora (' + nB + ')</button><button data-t="fotos">Evidencias (' + nF + ')</button></div>') +
+    (nueva ? '' : '<div class="mtabs"><button class="on" data-t="datos">Datos</button><button data-t="bit">Bitácora (' + nB + ')</button><button data-t="fotos">Fotos y documentos (' + nF + ')</button></div>') +
     '<div class="mcuerpo" data-p="datos">' +
-      (puede ? '' : '<p class="solo">🔒 Solo lectura: esta tarea es de ' + esc(v.area) + '. Solo esa dependencia, sus superiores o el administrador pueden modificarla.</p>') +
+      (puede ? '' : '<p class="solo">🔒 Solo lectura: esta tarea es de ' + esc(selAreas.join('; ')) + '. Solo esas dependencias, sus superiores o el administrador pueden modificarla.</p>') +
       '<div class="campo"><label>Título *</label><input id="tTitulo" maxlength="160" value="' + esc(v.titulo) + '"' + dis + '></div>' +
       '<div class="campo"><label>Descripción</label><textarea id="tDesc" maxlength="2000"' + dis + '>' + esc(v.descripcion) + '</textarea></div>' +
-      '<div class="fila2"><div class="campo"><label>Dependencia</label>' + depCampo + '</div>' +
-      '<div class="campo"><label>Responsable</label><input id="tResp" maxlength="100" placeholder="Grado y apellidos" value="' + esc(v.responsable) + '"' + dis + '></div></div>' +
+      (puede
+        ? '<div class="fila2"><div class="campo"><label>Dependencias (puede marcar varias) *</label><div class="selbar"><button type="button" id="tDepTodas">✓ Todas (comunicar a toda la unidad)</button><button type="button" id="tDepNinguna">Quitar todas</button></div><div class="selbox"><input type="search" id="tDepQ" placeholder="Buscar dependencia…"><div class="ops" id="tDeps"></div></div><div class="chips" id="tDepChips"></div></div>' +
+          '<div class="campo"><label>Responsables (personal registrado)</label><div class="selbar"><button type="button" id="tRespTodosMarcar">✓ Marcar a todos los mostrados</button><button type="button" id="tRespNinguno">Quitar todos</button></div><div class="selbox"><input type="search" id="tRespQ" placeholder="Buscar persona…"><div class="ops" id="tResps"></div></div><label class="chk" style="margin-top:6px;display:inline-flex"><input type="checkbox" id="tRespTodos"> Ver todo el personal</label><input id="tRespOtro" maxlength="300" placeholder="Otros responsables (texto libre, separados por ;)" style="margin-top:6px;border:1px solid var(--borde);border-radius:7px;padding:7px 10px;width:100%"></div></div>'
+        : '<div class="fila2"><div class="campo"><label>Dependencias</label><div class="solo">' + selAreas.map(esc).join('<br>') + '</div></div><div class="campo"><label>Responsables</label><div class="solo">' + esc(v.responsable || '—') + '</div></div></div>') +
       '<div class="fila3"><div class="campo"><label>Prioridad</label><select id="tPrio"' + dis + '>' + ['Alta', 'Media', 'Baja'].map(p => '<option' + (p === v.prioridad ? ' selected' : '') + '>' + p + '</option>').join('') + '</select></div>' +
       '<div class="campo"><label>Fecha de inicio</label><input type="date" id="tIni" value="' + esc(v.inicio) + '"' + dis + '></div>' +
       '<div class="campo"><label>Fecha límite *</label><input type="date" id="tFin" value="' + esc(v.fin) + '"' + dis + '></div></div>' +
@@ -540,10 +603,49 @@ function abrirTarea(id) {
       (nueva ? '' : '<p class="cuenta">Registrada por ' + esc(t.creadoPor) + ' el ' + fFechaHora(t.creado) + ' · Última actualización: ' + esc(t.actualizadoPor) + ', ' + fFechaHora(t.actualizado) + ' · ID ' + esc(t.id) + '</p>') +
     '</div>' +
     (nueva ? '' : '<div class="mcuerpo oculto" data-p="bit"></div><div class="mcuerpo oculto" data-p="fotos"></div>') +
-    '<div class="mpie">' + (t && t.eliminable ? '<button class="btn r izq" id="tBorrar">Eliminar</button>' : '') +
+    '<div class="mpie">' + (t && t.eliminable ? '<button class="btn r izq" id="tBorrar">Eliminar</button>' : '') + (t ? '<button class="btn" id="tComunicar">📣 Comunicar</button>' : '') +
       '<button class="btn" data-cerrar>' + (puede ? 'Cancelar' : 'Cerrar') + '</button>' + (puede ? '<button class="btn p" id="tGuardar">Guardar</button>' : '') + '</div>');
 
-  if (conSel) { const ta = f.querySelector('#tArea'); llenarSelectDeps(ta, false, v.area, rama); ta.onchange = () => { f.querySelector('#tRuta').textContent = ta.value; }; }
+  // --- selector de dependencias (varias) ---
+  const marcadas = new Set(selAreas), respMarc = new Set();
+  const pintarDeps = () => {
+    const q = (f.querySelector('#tDepQ').value || '').toLowerCase();
+    let h = '';
+    S.grupos.forEach(g => {
+      const L = S.arbol.filter(x => x.grupo === g.grupo && (!q || x.ruta.toLowerCase().indexOf(q) >= 0));
+      if (!L.length) return;
+      h += '<div class="gr" data-gr="' + esc(g.grupo) + '" title="Marcar o quitar todo este grupo">' + esc(g.grupo) + ' ✓</div>' + L.map(x => '<label style="padding-left:' + (4 + (q ? 0 : x.nivel * 18)) + 'px" title="' + esc(x.ruta) + '"><input type="checkbox" value="' + esc(x.ruta) + '"' + (marcadas.has(x.ruta) ? ' checked' : '') + '>' + esc(q ? x.ruta : x.nombre) + '</label>').join('');
+    });
+    const box = f.querySelector('#tDeps'); box.innerHTML = h || '<p class="cuenta">Sin coincidencias.</p>';
+    box.querySelectorAll('input').forEach(c => c.onchange = () => { c.checked ? marcadas.add(c.value) : marcadas.delete(c.value); chipsDeps(); pintarResps(); });
+    box.querySelectorAll('[data-gr]').forEach(el => el.onclick = () => {
+      const L = S.arbol.filter(x => x.grupo === el.dataset.gr && x.nivel === 0).map(x => x.ruta);
+      const todas = L.every(a => marcadas.has(a));
+      L.forEach(a => todas ? marcadas.delete(a) : marcadas.add(a)); pintarDeps(); chipsDeps(); pintarResps();
+    });
+  };
+  const chipsDeps = () => { const n = marcadas.size; f.querySelector('#tDepChips').innerHTML = (n > 6 ? '<span>' + n + ' dependencias marcadas</span>' : '') + [...marcadas].slice(0, n > 6 ? 0 : 6).map(a => '<span title="' + esc(a) + '">' + esc(corto(a)) + '</span>').join('') || '<small style="color:var(--venc)">Marque al menos una dependencia.</small>'; };
+  // --- responsables: personal de las dependencias marcadas ---
+  const pintarResps = () => {
+    const q = (f.querySelector('#tRespQ').value || '').toLowerCase(), todos = f.querySelector('#tRespTodos').checked;
+    const L = S.personal.filter(p => (todos || respMarc.has(etiquetaP(p)) || [...marcadas].some(a => dentro(p.dependencia, a) || dentro(a, p.dependencia))) && (!q || (etiquetaP(p) + ' ' + p.dependencia).toLowerCase().indexOf(q) >= 0))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const box = f.querySelector('#tResps');
+    box.innerHTML = L.length ? L.map(p => '<label title="' + esc(p.dependencia) + '"><input type="checkbox" value="' + esc(etiquetaP(p)) + '"' + (respMarc.has(etiquetaP(p)) ? ' checked' : '') + '>' + esc(etiquetaP(p)) + ' <small style="color:var(--gris)">· ' + esc(corto(p.dependencia)) + '</small></label>').join('')
+      : '<p class="cuenta" style="padding:6px">' + (marcadas.size ? 'No hay personal registrado en las dependencias marcadas. Marque «Ver todo el personal» o escriba abajo.' : 'Marque primero una dependencia.') + '</p>';
+    box.querySelectorAll('input').forEach(c => c.onchange = () => { c.checked ? respMarc.add(c.value) : respMarc.delete(c.value); });
+  };
+  if (puede) {
+    const conocidos = new Set(S.personal.map(etiquetaP)), otros = [];
+    respL.forEach(r => conocidos.has(r) ? respMarc.add(r) : otros.push(r));
+    f.querySelector('#tRespOtro').value = otros.join('; ');
+    f.querySelector('#tDepTodas').onclick = () => { S.arbol.filter(x => x.nivel === 0).forEach(x => marcadas.add(x.ruta)); pintarDeps(); chipsDeps(); pintarResps(); };
+    f.querySelector('#tDepNinguna').onclick = () => { marcadas.clear(); pintarDeps(); chipsDeps(); pintarResps(); };
+    f.querySelector('#tRespTodosMarcar').onclick = () => { f.querySelectorAll('#tResps input').forEach(c => respMarc.add(c.value)); pintarResps(); };
+    f.querySelector('#tRespNinguno').onclick = () => { respMarc.clear(); pintarResps(); };
+    f.querySelector('#tDepQ').oninput = pintarDeps; f.querySelector('#tRespQ').oninput = pintarResps; f.querySelector('#tRespTodos').onchange = pintarResps;
+    pintarDeps(); chipsDeps(); pintarResps();
+  }
   const av = f.querySelector('#tAv'), est = f.querySelector('#tEstado');
   av.oninput = () => { f.querySelector('#tAvO').textContent = av.value + '%'; if (av.value === '100' && est.value !== 'terminada' && puede) est.value = 'terminada'; };
   est.onchange = () => { if (est.value === 'terminada') { av.value = 100; av.oninput(); } };
@@ -559,11 +661,13 @@ function abrirTarea(id) {
   if (g) g.onclick = async () => {
     const tarea = {
       id: t ? t.id : '', titulo: f.querySelector('#tTitulo').value.trim(), descripcion: f.querySelector('#tDesc').value.trim(),
-      area: conSel ? f.querySelector('#tArea').value : v.area, responsable: f.querySelector('#tResp').value.trim(),
+      areas: [...marcadas], area: [...marcadas][0] || '', responsable: [...respMarc].concat(f.querySelector('#tRespOtro').value.split(';').map(x => x.trim()).filter(Boolean)).join('; '),
       prioridad: f.querySelector('#tPrio').value, estado: est.value, inicio: f.querySelector('#tIni').value,
       fin: f.querySelector('#tFin').value, avance: av.value
     };
     if (!tarea.titulo || !tarea.fin) { toast(ERRORES.faltan_datos, true); return; }
+    if (!tarea.areas.length) { toast('Marque al menos una dependencia.', true); return; }
+    if (!S.permisos.editarTodas && !tarea.areas.some(a => dentro(a, u.dependencia))) { toast('Al menos una de las dependencias marcadas debe ser la suya o una que dependa de ella.', true); return; }
     if (tarea.inicio && tarea.fin < tarea.inicio) { toast('La fecha límite no puede ser anterior a la fecha de inicio.', true); return; }
     g.disabled = true;
     const j = await api('guardar', {tarea: tarea, observacion: f.querySelector('#tObs').value.trim()});
@@ -571,16 +675,44 @@ function abrirTarea(id) {
     if (!j.ok) { toast(msgErr(j.error), true); return; }
     cerrar(f); toast(nueva ? 'Tarea registrada' : 'Cambios guardados');
     await recargar();
+    if (nueva) { const tn = S.tareas.filter(x => x.id === j.id)[0]; if (tn) comunicar(tn, true); }
   };
+  const bc = f.querySelector('#tComunicar'); if (bc) bc.onclick = () => comunicar(t);
   const del = f.querySelector('#tBorrar');
   if (del) del.onclick = async () => {
-    const nf = S.fotos.filter(x => x.taskId === t.id).length;
-    const ok = await confirmar('Eliminar tarea', '<p>Se eliminará <b>' + esc(t.titulo) + '</b> junto con su bitácora' + (nf ? ' y sus ' + nf + ' fotos (quedan 30 días en la papelera de Drive del administrador)' : '') + '.</p><p>La eliminación queda registrada. ¿Continuar?</p>', 'Eliminar');
+    const nf = S.fotos.filter(x => x.taskId === t.id).length + S.documentos.filter(x => x.taskId === t.id).length;
+    const ok = await confirmar('Eliminar tarea', '<p>Se eliminará <b>' + esc(t.titulo) + '</b> junto con su bitácora' + (nf ? ' y sus ' + nf + ' fotos y documentos (quedan 30 días en la papelera de Drive del administrador)' : '') + '.</p><p>La eliminación queda registrada. ¿Continuar?</p>', 'Eliminar');
     if (!ok) return;
     const j = await api('eliminar', {id: t.id});
     if (!j.ok) { toast(msgErr(j.error), true); return; }
     cerrar(f); toast('Tarea eliminada'); await recargar();
   };
+}
+
+/* Comunicado único para todo el personal asignado (WhatsApp, correo o copiar). */
+function comunicar(t, recienCreada) {
+  const url = location.href.split('?')[0].split('#')[0];
+  const deps = areasT(t);
+  const txt = '📣 *' + (recienCreada ? 'NUEVA TAREA' : 'TAREA') + ' – ' + S.base + '*\n\n' +
+    '*' + t.titulo + '*\n' +
+    (t.descripcion ? t.descripcion + '\n' : '') + '\n' +
+    '🏢 Dependencias: ' + (deps.length > 8 ? deps.length + ' dependencias' : deps.map(corto).join('; ')) + '\n' +
+    (t.responsable ? '👤 Responsables: ' + t.responsable + '\n' : '') +
+    '⚑ Prioridad: ' + t.prioridad + ' · Estado: ' + (ESTADOS[t.estado] || {}).n + ' · Avance: ' + (+t.avance || 0) + '%\n' +
+    '📅 Fecha límite: ' + fFecha(t.fin) + '\n\n' +
+    'Registre el avance y las evidencias en: ' + url + '\n(ID de tarea: ' + t.id + ')';
+  const f = modal('<div class="mcab"><h3>📣 Comunicar tarea</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
+    (recienCreada ? '<p class="solo">✓ Tarea registrada. Envíe este comunicado a todo el personal asignado con un solo paso.</p>' : '') +
+    '<div class="campo"><label>Mensaje (puede editarlo)</label><textarea id="cTxt" style="min-height:230px">' + esc(txt) + '</textarea></div>' +
+    '<p class="cuenta">WhatsApp abre la lista de chats: elija el <b>grupo de la unidad</b> y se envía a todos a la vez.</p></div>' +
+    '<div class="mpie"><button class="btn izq" id="cCopiar">📋 Copiar</button><a class="btn" id="cMail" href="#" target="_blank" rel="noopener">✉ Correo</a><a class="btn p" id="cWa" href="#" target="_blank" rel="noopener">WhatsApp</a></div>');
+  const ta = f.querySelector('#cTxt');
+  const act = () => {
+    f.querySelector('#cWa').href = 'https://wa.me/?text=' + encodeURIComponent(ta.value);
+    f.querySelector('#cMail').href = 'mailto:?subject=' + encodeURIComponent('Tarea: ' + t.titulo) + '&body=' + encodeURIComponent(ta.value.replace(/\*/g, ''));
+  };
+  ta.oninput = act; act();
+  f.querySelector('#cCopiar').onclick = () => navigator.clipboard.writeText(ta.value).then(() => toast('Mensaje copiado'), () => { ta.select(); toast('Seleccionado: presione Ctrl+C para copiar', true); });
 }
 
 function pintarBitacora(f, t) {
@@ -594,8 +726,14 @@ function pintarBitacora(f, t) {
 function pintarFotos(f, t) {
   const cont = f.querySelector('[data-p="fotos"]');
   const L = S.fotos.filter(x => x.taskId === t.id).sort((a, b) => b.fechaServidor.localeCompare(a.fechaServidor));
-  cont.innerHTML = (t.editable ? '<div class="subir"><div class="campo"><label>Agregar evidencia fotográfica</label><input type="file" id="fArch" accept="image/*" capture="environment"></div><div class="campo"><label>Comentario</label><input id="fCom" maxlength="500" placeholder="Qué muestra la foto"></div><label class="chk" style="display:inline-flex"><input type="checkbox" id="fUbic" checked> Registrar ubicación GPS</label> <button class="btn p" id="fSubir" style="margin-left:8px">Subir foto</button><div class="cuenta" id="fEstado" style="margin-top:8px"></div></div>' : '') +
-    (L.length ? '<div class="galeria">' + L.map(x => '<div class="foto" data-id="' + esc(x.id) + '"><div class="img">cargando…</div><div class="d">' + fFechaHora(x.fechaServidor) + '<br>' + esc((x.subidoPor || '').split(' – ')[0]) + (x.lat ? ' · 📍' : '') + '</div></div>').join('') + '</div>' : '<p class="cuenta">Aún no hay evidencias.</p>');
+  const D = S.documentos.filter(x => x.taskId === t.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const docsH = '<h4 style="margin:18px 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Documentos (' + D.length + ')</h4>' +
+    (t.editable ? '<div class="subir"><div class="campo"><label>Adjuntar documentos (PDF, Word, Excel, PowerPoint…) · máx. 15 MB c/u</label><input type="file" id="dArch" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.zip,.rar,.kml,.kmz,.jpg,.jpeg,.png,.webp"></div><div class="campo"><label>Comentario</label><input id="dCom" maxlength="500" placeholder="Qué contiene el documento"></div><button class="btn p" id="dSubir">Subir documentos</button><div class="cuenta" id="dEstado" style="margin-top:8px"></div></div>' : '') +
+    (D.length ? '<div class="docs">' + D.map(d => '<div class="doc"><span class="ext">' + esc((d.nombre.split('.').pop() || '').slice(0, 4)) + '</span><span class="n"><b title="' + esc(d.nombre) + '">' + esc(d.nombre) + '</b><small>' + fFechaHora(d.fecha) + ' · ' + esc((d.subidoPor || '').split(' – ')[0]) + ' · ' + Math.max(1, Math.round((+d.bytes || 0) / 1024)) + ' KB' + (d.comentario ? ' · ' + esc(d.comentario) : '') + '</small></span><button class="btn" data-doc="' + esc(d.id) + '">⬇ Descargar</button></div>').join('') + '</div>' : '<p class="cuenta">Aún no hay documentos.</p>');
+  cont.innerHTML = '<h4 style="margin:0 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Fotos (' + L.length + ')</h4>' + (t.editable ? '<div class="subir"><div class="campo"><label>Agregar fotos (puede elegir varias)</label><input type="file" id="fArch" accept="image/*" multiple></div><div class="campo"><label>Comentario</label><input id="fCom" maxlength="500" placeholder="Qué muestra la foto"></div><label class="chk" style="display:inline-flex"><input type="checkbox" id="fUbic" checked> Registrar ubicación GPS</label> <button class="btn p" id="fSubir" style="margin-left:8px">Subir foto</button><div class="cuenta" id="fEstado" style="margin-top:8px"></div></div>' : '') +
+    (L.length ? '<div class="galeria">' + L.map(x => '<div class="foto" data-id="' + esc(x.id) + '"><div class="img">cargando…</div><div class="d">' + fFechaHora(x.fechaServidor) + '<br>' + esc((x.subidoPor || '').split(' – ')[0]) + (x.lat ? ' · 📍' : '') + '</div></div>').join('') + '</div>' : '<p class="cuenta">Aún no hay fotos.</p>') + docsH;
+  cont.querySelectorAll('[data-doc]').forEach(b => b.onclick = () => descargarDoc(b.dataset.doc, b));
+  const bd = cont.querySelector('#dSubir'); if (bd) bd.onclick = () => subirDocs(f, t, cont);
   cont.querySelectorAll('.foto').forEach(el => el.onclick = () => verFoto(L.filter(x => x.id === el.dataset.id)[0]));
   cargarMiniaturas(cont, L);
   const b = cont.querySelector('#fSubir');
@@ -652,29 +790,64 @@ function ubicacion() {
       {enableHighAccuracy: true, timeout: 12000, maximumAge: 60000});
   });
 }
+async function refrescarAdjuntos(f, t) {
+  await recargar();
+  const tt = S.tareas.filter(x => x.id === t.id)[0] || t;
+  f.querySelector('.mtabs button[data-t="fotos"]').textContent = 'Fotos y documentos (' + (S.fotos.filter(x => x.taskId === t.id).length + S.documentos.filter(x => x.taskId === t.id).length) + ')';
+  f.querySelector('.mtabs button[data-t="bit"]').textContent = 'Bitácora (' + S.bitacora.filter(x => x.taskId === t.id).length + ')';
+  pintarFotos(f, tt);
+}
 async function subirFoto(f, t, cont) {
-  const arch = cont.querySelector('#fArch').files[0], est = cont.querySelector('#fEstado'), b = cont.querySelector('#fSubir');
-  if (!arch) { toast('Elija o tome una foto primero.', true); return; }
-  b.disabled = true;
+  const archs = [...cont.querySelector('#fArch').files], est = cont.querySelector('#fEstado'), b = cont.querySelector('#fSubir');
+  if (!archs.length) { toast('Elija o tome una foto primero.', true); return; }
+  b.disabled = true; let ok = 0;
   try {
-    est.textContent = 'Preparando imagen…';
-    const imagenData = await comprimir(arch, 1920, 0.82);
     let u = {estado: 'no solicitada'};
     if (cont.querySelector('#fUbic').checked) { est.textContent = 'Obteniendo ubicación GPS…'; u = await ubicacion(); }
-    est.textContent = 'Subiendo…';
-    const j = await api('foto', {taskId: t.id, imagen: imagenData, comentario: cont.querySelector('#fCom').value.trim(),
-      fechaDispositivo: new Date(arch.lastModified || Date.now()).toISOString(), lat: u.lat, lng: u.lng, precision: u.precision,
-      ubicacionEstado: u.estado, dispositivo: navigator.userAgent.slice(0, 150)});
-    if (!j.ok) { est.textContent = ''; toast(msgErr(j.error), true); return; }
-    toast('Evidencia cargada' + (u.estado === 'ok' ? ' con ubicación' : ' (sin ubicación)'));
-    await recargar();
-    const tt = S.tareas.filter(x => x.id === t.id)[0] || t;
-    const tab = f.querySelector('.mtabs button[data-t="fotos"]');
-    tab.textContent = 'Evidencias (' + S.fotos.filter(x => x.taskId === t.id).length + ')';
-    f.querySelector('.mtabs button[data-t="bit"]').textContent = 'Bitácora (' + S.bitacora.filter(x => x.taskId === t.id).length + ')';
-    pintarFotos(f, tt);
-  } catch (e) { est.textContent = ''; toast('No se pudo leer la imagen. Pruebe con otra foto.', true); }
-  finally { b.disabled = false; }
+    for (let i = 0; i < archs.length; i++) {
+      const arch = archs[i];
+      est.textContent = 'Subiendo foto ' + (i + 1) + ' de ' + archs.length + '…';
+      let imagenData;
+      try { imagenData = await comprimir(arch, 1920, 0.82); } catch (e) { toast('No se pudo leer «' + arch.name + '».', true); continue; }
+      const j = await api('foto', {taskId: t.id, imagen: imagenData, comentario: cont.querySelector('#fCom').value.trim(),
+        fechaDispositivo: new Date(arch.lastModified || Date.now()).toISOString(), lat: u.lat, lng: u.lng, precision: u.precision,
+        ubicacionEstado: u.estado, dispositivo: navigator.userAgent.slice(0, 150)});
+      if (!j.ok) { toast(msgErr(j.error), true); break; }
+      ok++;
+    }
+    est.textContent = '';
+    if (ok) { toast(ok + (ok === 1 ? ' foto cargada' : ' fotos cargadas') + (u.estado === 'ok' ? ' con ubicación' : ' (sin ubicación)')); await refrescarAdjuntos(f, t); }
+  } finally { b.disabled = false; }
+}
+function leerArchivo(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+}
+async function subirDocs(f, t, cont) {
+  const archs = [...cont.querySelector('#dArch').files], est = cont.querySelector('#dEstado'), b = cont.querySelector('#dSubir');
+  if (!archs.length) { toast('Elija uno o más documentos primero.', true); return; }
+  const grande = archs.find(a => a.size > 15 * 1024 * 1024);
+  if (grande) { toast('«' + grande.name + '» supera los 15 MB.', true); return; }
+  b.disabled = true; let ok = 0;
+  try {
+    for (let i = 0; i < archs.length; i++) {
+      est.textContent = 'Subiendo documento ' + (i + 1) + ' de ' + archs.length + ': ' + archs[i].name + '…';
+      const datos = await leerArchivo(archs[i]);
+      const j = await api('documento', {taskId: t.id, nombre: archs[i].name, archivo: datos, comentario: cont.querySelector('#dCom').value.trim()});
+      if (!j.ok) { toast(archs[i].name + ': ' + msgErr(j.error), true); continue; }
+      ok++;
+    }
+    est.textContent = '';
+    if (ok) { toast(ok + (ok === 1 ? ' documento adjuntado' : ' documentos adjuntados')); await refrescarAdjuntos(f, t); }
+  } finally { b.disabled = false; }
+}
+async function descargarDoc(id, btn) {
+  btn.disabled = true; const txt = btn.textContent; btn.textContent = 'Descargando…';
+  const j = await api('descargar', {id: id});
+  btn.disabled = false; btn.textContent = txt;
+  if (!j.ok) { toast(msgErr(j.error), true); return; }
+  const bytes = Uint8Array.from(atob(j.datos), c => c.charCodeAt(0));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], {type: j.tipo || 'application/octet-stream'})); a.download = j.nombre;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 
 /* ---------- personal y claves (admin) ---------- */
@@ -715,7 +888,7 @@ function abrirUsuario(u) {
     if (!j.ok) { toast(msgErr(j.error), true); return; }
     cerrar(f);
     if (j.clave) mostrarClave(d, j.clave); else toast('Usuario actualizado');
-    cargarUsuarios();
+    cargarUsuarios(); cargarPersonal().then(pintarPanel);
   };
   const bc = f.querySelector('#uClave');
   if (bc) bc.onclick = async () => {
