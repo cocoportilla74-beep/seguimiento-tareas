@@ -256,7 +256,7 @@ const ERRORES = {
   codigo_invalido: 'El código del período es incorrecto o ya venció.',
   clave_invalida: 'La clave personal es incorrecta o fue dada de baja.',
   sesion_invalida: 'Su sesión terminó. Ingrese nuevamente.',
-  sin_permiso: 'No tiene permiso para esta acción (solo puede modificar tareas de su dependencia).',
+  sin_permiso: 'No tiene permiso para esta acción (solo puede modificar tareas de su dependencia y de las unidades que dependen de ella).',
   faltan_datos: 'Complete al menos el título y la fecha límite.',
   tarea_no_existe: 'La tarea ya no existe (quizá fue eliminada).',
   imagen_invalida: 'El archivo no es una imagen válida (JPG, PNG o WEBP).',
@@ -269,7 +269,7 @@ const ERRORES = {
   red: 'No hay conexión con el servidor. Revise su internet.'
 };
 
-const S = {token: '', usuario: null, permisos: {}, base: '', deps: [], grupos: [], vigenteHasta: '',
+const S = {token: '', usuario: null, permisos: {}, base: '', deps: [], grupos: [], arbol: [], vigenteHasta: '',
            tareas: [], bitacora: [], fotos: [], usuarios: [], vista: 'panel', servidor: ''};
 const IMG = {}; // caché de imágenes: id+tam -> dataURL
 const $ = s => document.querySelector(s);
@@ -279,6 +279,9 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&am
 /* ---------- utilidades ---------- */
 function hoyISO() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function diasA(fin) { if (!fin) return null; const a = new Date(hoyISO() + 'T00:00:00'), b = new Date(fin + 'T00:00:00'); return Math.round((b - a) / 864e5); }
+const SEP = ' › ';
+function dentro(a, d) { return a === d || String(a).indexOf(d + SEP) === 0; }
+function corto(r) { const p = String(r || '').split(SEP); return p.length > 2 ? p[0] + ' › … › ' + p[p.length - 1] : p.join(SEP); }
 function activa(t) { return t.estado !== 'terminada' && t.estado !== 'cancelada'; }
 function vencida(t) { const d = diasA(t.fin); return activa(t) && d !== null && d < 0; }
 function fFecha(iso) { if (!iso) return '—'; const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + 'T00:00:00') : new Date(iso); if (isNaN(d)) return esc(iso); return d.toLocaleDateString('es-PE', {day: '2-digit', month: '2-digit', year: 'numeric'}); }
@@ -342,12 +345,13 @@ function aplicarSesion(j) {
   S.usuario = j.usuario || S.usuario; S.permisos = j.permisos || S.permisos;
   S.base = j.base || S.base; S.deps = j.dependencias || S.deps; S.vigenteHasta = j.vigenteHasta || S.vigenteHasta;
   S.grupos = (j.grupos && j.grupos.length) ? j.grupos : (S.grupos.length ? S.grupos : [{grupo: 'Dependencias', dependencias: S.deps}]);
+  S.arbol = (j.arbol && j.arbol.length) ? j.arbol : (S.arbol.length ? S.arbol : S.deps.map(d => ({ruta: d, nombre: d, nivel: 0, grupo: 'Dependencias'})));
 }
 
 async function entrar() {
   $('#login').classList.add('oculto'); $('#app').classList.remove('oculto');
   const u = S.usuario;
-  $('#hBase').textContent = S.base + ' · ' + u.dependencia;
+  $('#hBase').textContent = S.base + ' · ' + corto(u.dependencia);
   $('#hYo').textContent = [u.grado, u.nombre].filter(Boolean).join(' ');
   $('#hRol').textContent = ROLES[u.rol] || u.rol;
   $('#tabUsuarios').classList.toggle('oculto', !S.permisos.gestionarUsuarios);
@@ -377,9 +381,13 @@ async function recargar(silencioso) {
 setInterval(() => { if (S.token && !document.hidden && !$('#modales').children.length) recargar(true); }, 120000);
 $('#bRefrescar').onclick = () => recargar().then(ok => ok && toast('Datos actualizados'));
 
-function llenarSelectDeps(sel, conTodas, valor) {
+function llenarSelectDeps(sel, conTodas, valor, rama) {
   let h = conTodas ? '<option value="">Todas las dependencias</option>' : '';
-  S.grupos.forEach(g => { h += '<optgroup label="' + esc(g.grupo) + '">' + g.dependencias.map(d => '<option' + (d === valor ? ' selected' : '') + '>' + esc(d) + '</option>').join('') + '</optgroup>'; });
+  S.grupos.forEach(g => {
+    const L = S.arbol.filter(x => x.grupo === g.grupo && (!rama || dentro(x.ruta, rama)));
+    if (!L.length) return;
+    h += '<optgroup label="' + esc(g.grupo) + '">' + L.map(x => '<option value="' + esc(x.ruta) + '"' + (x.ruta === valor ? ' selected' : '') + '>' + '\u00a0\u00a0\u00a0\u00a0'.repeat(x.nivel) + (x.nivel ? '└ ' : '') + esc(x.nombre) + '</option>').join('') + '</optgroup>';
+  });
   sel.innerHTML = h;
 }
 
@@ -419,7 +427,7 @@ function pintarPanel() {
   S.grupos.forEach((g, gi) => {
     h += '<div class="grupo"><i style="background:' + COLOR_GRUPO[gi % 5] + '"></i>' + esc(g.grupo) + '</div>';
     g.dependencias.forEach(d => {
-      const td = T.filter(t => t.area === d), ta = td.filter(activa), tv = td.filter(vencida);
+      const td = T.filter(t => dentro(t.area, d)), ta = td.filter(activa), tv = td.filter(vencida);
       const prom = ta.length ? Math.round(ta.reduce((s, t) => s + (+t.avance || 0), 0) / ta.length) : (td.length ? 100 : 0);
       h += '<div class="dep" data-d="' + esc(d) + '"><span>' + esc(d) + '</span><span class="av"><div class="barra"><span style="width:' + prom + '%"></span></div><small style="color:var(--gris)">' + (td.length ? prom + '%' : 'sin tareas') + '</small></span><span class="num">' + ta.length + '</span><span class="num' + (tv.length ? ' rojo' : '') + '">' + tv.length + '</span><span class="num">' + td.length + '</span></div>';
     });
@@ -427,7 +435,7 @@ function pintarPanel() {
   $('#porDep').innerHTML = h;
   $$('#porDep .dep[data-d]').forEach(el => el.onclick = () => irATareas({dep: el.dataset.d}));
 
-  const fila = t => '<div class="prox" data-id="' + esc(t.id) + '">' + chip(t.estado) + '<span class="t"><b>' + esc(t.titulo) + '</b><br><small style="color:var(--gris)">' + esc(t.area) + ' · ' + esc(t.responsable || 'sin responsable') + '</small></span>' + plazoTxt(t) + '</div>';
+  const fila = t => '<div class="prox" data-id="' + esc(t.id) + '">' + chip(t.estado) + '<span class="t"><b>' + esc(t.titulo) + '</b><br><small style="color:var(--gris)">' + esc(corto(t.area)) + ' · ' + esc(t.responsable || 'sin responsable') + '</small></span>' + plazoTxt(t) + '</div>';
   const vs = ven.sort((a, b) => a.fin.localeCompare(b.fin));
   $('#vencidas').innerHTML = vs.length ? vs.slice(0, 8).map(fila).join('') + (vs.length > 8 ? '<p class="cuenta">… y ' + (vs.length - 8) + ' más. <a href="#" id="verVenc">Ver todas</a></p>' : '') : '<p class="cuenta">✓ No hay tareas vencidas.</p>';
   const px = act.filter(t => { const d = diasA(t.fin); return d !== null && d >= 0 && d <= 7; }).sort((a, b) => a.fin.localeCompare(b.fin));
@@ -444,9 +452,9 @@ function filtradas() {
   const pv = {Alta: 0, Media: 1, Baja: 2};
   let L = S.tareas.filter(t =>
     (!q || (t.titulo + ' ' + t.responsable + ' ' + t.descripcion + ' ' + t.id).toLowerCase().indexOf(q) >= 0) &&
-    (!dep || t.area === dep) && (!pr || t.prioridad === pr) &&
+    (!dep || dentro(t.area, dep)) && (!pr || t.prioridad === pr) &&
     (!est || (est === 'activas' ? activa(t) : t.estado === est)) &&
-    (!$('#fVenc').checked || vencida(t)) && (!$('#fMia').checked || t.area === S.usuario.dependencia));
+    (!$('#fVenc').checked || vencida(t)) && (!$('#fMia').checked || dentro(t.area, S.usuario.dependencia)));
   const o = $('#fOrden').value;
   L.sort((a, b) => {
     if (o === 'act') return (b.actualizado || '').localeCompare(a.actualizado || '');
@@ -464,7 +472,7 @@ function pintarLista() {
     const nf = S.fotos.filter(f => f.taskId === t.id).length, col = vencida(t) ? 'var(--venc)' : (ESTADOS[t.estado] || ESTADOS.pendiente).c;
     return '<div class="tarea" data-id="' + esc(t.id) + '" style="border-top-color:' + col + '">' +
       '<div class="h"><h4>' + esc(t.titulo) + '</h4>' + chip(t.estado) + '</div>' +
-      '<div class="meta"><span>🏢 ' + esc(t.area) + '</span><span>👤 ' + esc(t.responsable || 'Sin responsable') + '</span><span class="prio ' + esc(t.prioridad) + '">' + esc(t.prioridad) + '</span></div>' +
+      '<div class="meta"><span title="' + esc(t.area) + '">🏢 ' + esc(corto(t.area)) + '</span><span>👤 ' + esc(t.responsable || 'Sin responsable') + '</span><span class="prio ' + esc(t.prioridad) + '">' + esc(t.prioridad) + '</span></div>' +
       '<div class="rango"><div class="barra" style="flex:1"><span style="width:' + (+t.avance || 0) + '%;background:' + col + '"></span></div><b style="font-size:13px">' + (+t.avance || 0) + '%</b></div>' +
       '<div class="meta" style="justify-content:space-between">' + plazoTxt(t) + '<span>' + (nf ? '📷 ' + nf : '') + (t.editable ? '' : ' 🔒') + '</span></div></div>';
   }).join('');
@@ -510,15 +518,15 @@ function abrirTarea(id) {
   const v = t || {titulo: '', descripcion: '', area: u.dependencia, responsable: '', prioridad: 'Media', estado: 'pendiente', inicio: hoyISO(), fin: '', avance: '0'};
   const dis = puede ? '' : ' disabled';
   const opt = (o, val) => Object.keys(o).map(k => '<option value="' + k + '"' + (k === val ? ' selected' : '') + '>' + esc(o[k].n || o[k]) + '</option>').join('');
-  const depCampo = S.permisos.editarTodas
-    ? '<select id="tArea"' + dis + '></select>'
-    : '<div class="solo">' + esc(v.area) + '</div>';
+  const rama = S.permisos.editarTodas ? '' : u.dependencia;
+  const conSel = puede && S.arbol.filter(x => !rama || dentro(x.ruta, rama)).length > 1;
+  const depCampo = conSel ? '<select id="tArea"></select><small id="tRuta" style="color:var(--gris)">' + esc(v.area) + '</small>' : '<div class="solo">' + esc(v.area) + '</div>';
   const nF = t ? S.fotos.filter(f => f.taskId === t.id).length : 0, nB = t ? S.bitacora.filter(b => b.taskId === t.id).length : 0;
   const f = modal(
     '<div class="mcab"><h3>' + (nueva ? 'Nueva tarea' : esc(t.titulo)) + '</h3><button data-cerrar title="Cerrar">×</button></div>' +
     (nueva ? '' : '<div class="mtabs"><button class="on" data-t="datos">Datos</button><button data-t="bit">Bitácora (' + nB + ')</button><button data-t="fotos">Evidencias (' + nF + ')</button></div>') +
     '<div class="mcuerpo" data-p="datos">' +
-      (puede ? '' : '<p class="solo">🔒 Solo lectura: esta tarea es de ' + esc(v.area) + '. Solo esa dependencia o el administrador pueden modificarla.</p>') +
+      (puede ? '' : '<p class="solo">🔒 Solo lectura: esta tarea es de ' + esc(v.area) + '. Solo esa dependencia, sus superiores o el administrador pueden modificarla.</p>') +
       '<div class="campo"><label>Título *</label><input id="tTitulo" maxlength="160" value="' + esc(v.titulo) + '"' + dis + '></div>' +
       '<div class="campo"><label>Descripción</label><textarea id="tDesc" maxlength="2000"' + dis + '>' + esc(v.descripcion) + '</textarea></div>' +
       '<div class="fila2"><div class="campo"><label>Dependencia</label>' + depCampo + '</div>' +
@@ -535,7 +543,7 @@ function abrirTarea(id) {
     '<div class="mpie">' + (t && t.eliminable ? '<button class="btn r izq" id="tBorrar">Eliminar</button>' : '') +
       '<button class="btn" data-cerrar>' + (puede ? 'Cancelar' : 'Cerrar') + '</button>' + (puede ? '<button class="btn p" id="tGuardar">Guardar</button>' : '') + '</div>');
 
-  if (S.permisos.editarTodas) llenarSelectDeps(f.querySelector('#tArea'), false, v.area);
+  if (conSel) { const ta = f.querySelector('#tArea'); llenarSelectDeps(ta, false, v.area, rama); ta.onchange = () => { f.querySelector('#tRuta').textContent = ta.value; }; }
   const av = f.querySelector('#tAv'), est = f.querySelector('#tEstado');
   av.oninput = () => { f.querySelector('#tAvO').textContent = av.value + '%'; if (av.value === '100' && est.value !== 'terminada' && puede) est.value = 'terminada'; };
   est.onchange = () => { if (est.value === 'terminada') { av.value = 100; av.oninput(); } };
@@ -551,7 +559,7 @@ function abrirTarea(id) {
   if (g) g.onclick = async () => {
     const tarea = {
       id: t ? t.id : '', titulo: f.querySelector('#tTitulo').value.trim(), descripcion: f.querySelector('#tDesc').value.trim(),
-      area: S.permisos.editarTodas ? f.querySelector('#tArea').value : v.area, responsable: f.querySelector('#tResp').value.trim(),
+      area: conSel ? f.querySelector('#tArea').value : v.area, responsable: f.querySelector('#tResp').value.trim(),
       prioridad: f.querySelector('#tPrio').value, estado: est.value, inicio: f.querySelector('#tIni').value,
       fin: f.querySelector('#tFin').value, avance: av.value
     };
@@ -683,7 +691,7 @@ function pintarUsuarios() {
   const orden = S.deps;
   const L = S.usuarios.filter(u => !q || (u.grado + ' ' + u.nombre + ' ' + u.dependencia + ' ' + u.rol).toLowerCase().indexOf(q) >= 0)
     .sort((a, b) => (orden.indexOf(a.dependencia) - orden.indexOf(b.dependencia)) || a.nombre.localeCompare(b.nombre));
-  $('#uLista').innerHTML = L.length ? L.map(u => '<tr class="' + (u.activo === 'SI' ? '' : 'baja') + '"><td><b>' + esc([u.grado, u.nombre].filter(Boolean).join(' ')) + '</b></td><td>' + esc(u.dependencia) + '</td><td>' + esc(ROLES[u.rol] || u.rol) + '</td><td>' + (u.activo === 'SI' ? '<span style="color:var(--term)">● Activo</span>' : '○ De baja') + '</td><td>' + (u.ultimoAcceso ? fFechaHora(u.ultimoAcceso) : 'Nunca') + '</td><td><button class="btn" data-u="' + esc(u.id) + '">Editar</button></td></tr>').join('') : '<tr><td colspan="6" class="cuenta">Sin resultados.</td></tr>';
+  $('#uLista').innerHTML = L.length ? L.map(u => '<tr class="' + (u.activo === 'SI' ? '' : 'baja') + '"><td><b>' + esc([u.grado, u.nombre].filter(Boolean).join(' ')) + '</b></td><td title="' + esc(u.dependencia) + '">' + esc(corto(u.dependencia)) + '</td><td>' + esc(ROLES[u.rol] || u.rol) + '</td><td>' + (u.activo === 'SI' ? '<span style="color:var(--term)">● Activo</span>' : '○ De baja') + '</td><td>' + (u.ultimoAcceso ? fFechaHora(u.ultimoAcceso) : 'Nunca') + '</td><td><button class="btn" data-u="' + esc(u.id) + '">Editar</button></td></tr>').join('') : '<tr><td colspan="6" class="cuenta">Sin resultados.</td></tr>';
   $$('#uLista [data-u]').forEach(b => b.onclick = () => abrirUsuario(S.usuarios.filter(u => u.id === b.dataset.u)[0]));
 }
 $('#bNuevoUsuario').onclick = () => abrirUsuario(null);
@@ -695,7 +703,7 @@ function abrirUsuario(u) {
     '<div class="campo"><label>Apellidos y nombres *</label><input id="uNombre" maxlength="100" value="' + esc(v.nombre) + '"></div></div>' +
     '<div class="fila2"><div class="campo"><label>Dependencia</label><select id="uDep"></select></div>' +
     '<div class="campo"><label>Rol</label><select id="uRol"' + (yo ? ' disabled' : '') + '>' + Object.keys(ROLES).map(r => '<option value="' + r + '"' + (r === v.rol ? ' selected' : '') + '>' + ROLES[r] + '</option>').join('') + '</select></div></div>' +
-    '<p class="cuenta"><b>Usuario:</b> crea y edita tareas de su dependencia. <b>Jefe:</b> además puede eliminarlas. <b>Administrador:</b> todo, incluido el personal y las claves.</p>' +
+    '<p class="cuenta">Cada persona trabaja las tareas de su unidad y de todas las que dependen de ella. <b>Usuario:</b> crea y edita tareas de su dependencia. <b>Jefe:</b> además puede eliminarlas. <b>Administrador:</b> todo, incluido el personal y las claves.</p>' +
     (nuevo ? '' : '<label class="chk" style="display:inline-flex"><input type="checkbox" id="uActivo"' + (v.activo === 'SI' ? ' checked' : '') + (yo ? ' disabled' : '') + '> Activo (desmarque para dar de baja)</label>') +
     '</div><div class="mpie">' + (nuevo ? '' : '<button class="btn izq" id="uClave">Generar nueva clave</button>') + '<button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="uGuardar">' + (nuevo ? 'Crear y generar clave' : 'Guardar') + '</button></div>', true);
   llenarSelectDeps(f.querySelector('#uDep'), false, v.dependencia);
