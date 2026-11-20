@@ -41,6 +41,12 @@ main{max-width:1200px;margin:0 auto;padding:16px 14px 80px}
 .lcard .ayuda{font-size:12px;color:var(--gris);text-align:left;margin-top:3px}
 .lcard .err{color:var(--venc);font-size:14px;min-height:20px;margin-top:10px}
 .lcard .pie{font-size:11.5px;color:var(--gris);margin-top:14px}
+.bio{width:100%;padding:13px;border-radius:10px;border:2px solid var(--azul);background:#eef3fb;color:var(--azul);font-weight:bold;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer}
+.bio:hover{background:#dfe9f8}.bio[disabled]{opacity:.6}
+.sep{display:flex;align-items:center;gap:10px;color:var(--gris);font-size:12px;margin:14px 0 2px;text-transform:uppercase}.sep:before,.sep:after{content:"";flex:1;border-top:1px solid var(--borde)}
+.lnk{background:none;border:0;color:var(--azul);text-decoration:underline;font-size:13.5px;margin-top:12px;cursor:pointer}
+.biocaja{border:1px solid var(--borde);border-radius:10px;padding:10px 12px;margin-top:12px;background:#f7f9fc}
+.biocaja h4{margin:0 0 6px;color:var(--azul);font-size:13.5px;text-transform:uppercase}
 /* botones y campos */
 .btn{border:1px solid var(--borde);background:#fff;border-radius:8px;padding:8px 14px;font-weight:bold;font-size:14px;display:inline-flex;align-items:center;gap:6px}
 .btn:hover{background:#f6f8fb}
@@ -133,6 +139,23 @@ table.t{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
 table.t th{text-align:left;font-size:11.5px;text-transform:uppercase;color:var(--gris);padding:8px;border-bottom:2px solid var(--borde)}
 table.t td{padding:8px;border-bottom:1px solid #eef1f5}
 table.t tr.baja td{color:#9ca3af}
+table.t tr.pend td{background:#fffbeb}
+table.t td input,table.t td select{width:100%;padding:5px 6px;border:1px solid var(--borde);border-radius:6px;font-size:13px}
+table.t tr.mod td{background:#eef6ff}
+.badge{background:var(--venc);color:#fff;border-radius:10px;padding:0 7px;font-size:12px;margin-left:4px}
+.solc{border:1px solid var(--borde);border-radius:12px;background:#fff;padding:12px 14px;margin-bottom:12px}
+.solc h4{margin:0 0 4px;color:var(--azul)}
+.solc .dif{color:var(--venc);font-weight:bold}
+.solc table{width:100%;font-size:13.5px;border-collapse:collapse;margin:8px 0}
+.solc td,.solc th{padding:4px 6px;border-bottom:1px solid #eef1f5;text-align:left}
+.fotos3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.fotos3 label{border:2px dashed var(--borde);border-radius:10px;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:12.5px;cursor:pointer;padding:6px;background:#f9fafb;overflow:hidden}
+.fotos3 label.ok{border-color:var(--term);border-style:solid}
+.fotos3 img{max-width:100%;max-height:90px;border-radius:6px}
+.fotos3 input{display:none}
+.consent{display:flex;gap:8px;align-items:flex-start;font-size:13px;background:#f7f9fc;border:1px solid var(--borde);border-radius:8px;padding:8px;margin-top:8px}
+.consent input{width:auto;margin-top:3px}
+@media (max-width:600px){.fotos3{grid-template-columns:1fr}}
 .tabwrap{overflow-x:auto;border:1px solid var(--borde);border-radius:12px;background:#fff}
 /* aviso */
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 18px;border-radius:9px;z-index:80;font-size:14.5px;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw;text-align:center}
@@ -193,6 +216,10 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
     <div class="esc"><img src="data:image/jpeg;base64,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" alt="Escudo FAP"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUGBgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2wBDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCT/wAARCABfAGgDASIAAhEBAxEB/8QAHAAAAgIDAQEAAAAAAAAAAAAABwgABgEEBQMC/8QAPBAAAQMDAgQCCAQFAgcAAAAAAQIDBAUGEQAhBxIxQRNRCBQiMmFxgZEVQlKhIzOCscEWQyRGU4OTotH/xAAbAQACAgMBAAAAAAAAAAAAAAAEBQEGAAMHAv/EADIRAAEDAgUBBgUDBQAAAAAAAAEAAgMEEQUSITFBURNhcZGx0QYUMkKBIkNyYqHB8PH/2gAMAwEAAhEDEQA/AF376yNTU1aEmWdblKo1SrsxEOlwZEyQs4DbKConRF4P8DanxJcTUJalwKG2r2pBHtPY6pQP86PLlxWXwuiIotnwofrrjSiiUpJU0VJz76x7RJIxttkjQU9Y2PRupREVOXanZCa1fRRumrNh+uTY1GbKchH81z6gbDVjb9Guw6VKch128ZKZDbAeXjkbQlJOAcnzPbRHp1Su+utVeRNfiwqFUIYbjPSssqjulocykpIBKOYnqc7barsDhnQUFTcitVmttLYbjHwYhJ5EHIHiY7Hv5aXOrJXHeyLbTsHC4bHo18NpTjyWLzkOeAgOOcrrZ5EnoSew3GtCv+iIsDNv3K26opKktS28FXlgp7avbnDm3G4MqEpm6WYcspU8lLHvcowkEgZwNjjvjXhXaPKrdQblW/dLLdSiRWo8VuUhUeQCgEKxzEJ9rOTkdQNQKuUfcpMDDwlpvDhVdtjvrTV6S+GU9JLSStpQ88j/ADqp6eem3FJty2aobvRLkNwloYbafZC3JIKR0PRfMonvsBvoYXjwOtniJT3q9w+fbiVLAcepy1YSCfykfkV+2jYK8HSQWQ0lKRq1LNqa26pSptFnvU+oxnYsphRS404nBSdammXghCLKampqaxYpqw2PSYNVuKEiqsyXacX0B5EZOXHAT7qR3OuAhPMsJ33ONtMp6OtmQoUWVd1VSlMSlpV4Sl9A5jK1/QbD4nSzEat0QEcf1O/sE8wjD45myVE/0MHm47D/ACe4Ij12rvhdOtK1qahqnyY5Q2pKvCCgAeZoK/21p2O++e2M61rLshNDUIsEIqFUQSZEx4BcaAtQ9pKBj2lHy6D4dNUu06rc/EbiZMn0ia9TKasZlFCRyoY3CQB08VXZXUfTTBUynRqPBaiRGQ0w0nCUD9yT3J7nSaKUSDMEVXUL6KQQyEZrAkDi/B71z41twIyvW6ktU+SkZMiYoKCfkn3Uj5DXaSpsIBSQE9sdNAHjvxVfZqiLaorwQIqg5NdACgpfUN77EDqfpobL4o3CtoMlyMUAYA8MkD+nmwPtpfU4l2L8gbf8p1QfCddWQNnjAAd1NtOqcRt5h5RDbrayOoSoHGvOdTINRb8OZFZkJ8nEhWNJ5E4nXFAd8Rp2PnP5Wg2R8lJwRoh2VxRvO9p7dKZbeUgjC3UucpH9QTn461Mxa4/VGb9xB9bLxiHwtW0TTJJbKObowP0So0chyiu+tREnKqdLVzD/ALSzuk/A5Hy0L51FkW1LZuC1p7kWI1LPr8WQOV1p1agSHj3RuRk7Ab7nGjZTQuNCZZlShJfabCXXTgFSgNydcK7abISy7X6A2y9VI7RBZUf4c1sf7S8d/I9j89OAdLlVwC5shbxrs2lX5Yjt4qRGg1SKnMd4qKBKbB6EKAJzvy9+nnpTjsemNNXaFVb4x0+u0K4ygVsp8aGseyhlI6JQntyq2Pcg6XC7aG9Q6u9GkNlpxK1IcTj3VpOCNGYdXhzhGdjt49EZX4E+KGSR2j4yMw/pOzh119QuFqampp6qyuhQWA/U28jIQCv7aZ7iA+3ZnBih28yFNP1JKVPgbEpxzrz8yQNLpYzSXqqkKxgrbSfkVDTC+kYtP4vbsLH8MRlYHbdSR/jVQxOQmeQ9AB5/9XSMDhaKejY7ZznvPfl29EReClri27GhrWgCVUAJb5PX2h7I+icavkpp16K62y54LqkkIcxnkONjjvjQyrt/BdCXSLfROizmW0tsvqCGglSMbYXvynGOnTWiniRdDSA3IcgpcxufByf2ONbo48rQBwqtVVLppnTSHVxJXsPRvtd9ta51Sq0qY6St2Sp0ArWdyrGPPXEkei/E8cmNckhDH6Vx0qV9866sW9q4h8yVVcOq/wCitKQ38sDcffVb4leke7QkKp0GHHS5IjKaU6mQFOMPK2BCR1TjJyd860y0sVruamVJjuItIZFORxvoh7c1o0mHdybdt+oSaiW1eE+8tCQPEzuE464/vpg6Jwqi0+0k0mNPmUuU6Ap2RDWEr6e7nG48/M6DXBKp2nTai7WrhrlOiqZ/liQ8ApRz1x88n6DTBI4k2SpkPJumjFChkH1pH/3QOHxDOai1unumPxNXyTObR5y9rBqerjv7BBOo8FL7gvuCNJZqDDrq8LEotq5eyl5PU/DXO4f1yv2xdDUCC8t4qkiO9EDniNOHODgjIz3yNE3ihxSoSrLqDFv1+DLqL4SylEV4LWlCjhR26eznfQ94UMVytMw5dApgWuMHEqmKfDbbCio5SNiVEgDVrkxqWOmvKwSXNrAC+178bGy5+cLaZx2TiwjW99N9vVbF5sN8NeNESqx0+FElOJlFKf0rPK4n5Z31V/SdoKYt1uzWGkpanMNykkd1D2VH+2rBx/p1Uhpo8iryW3pK/HQ0UKzhACTucDv27a+vSJQJFu2lLWcuu05YUfP2EH++qtFJkJda1iHWPF11CnHzDKa/3sfGe/Lt5aeSWfU1nU1e1y0rtWnI8CpfTmH0OdMlx8aE+g2tcTaSW1N+HzeXMlK0/wBjpWoUj1WW0/15Vbj4d9NRaqzxO4MS6CF89SpJCmArcq5faR9xlOqrisJbM633DTxC6BgdY35SCV20LyHfxfz6ol1CmOXtacB6kzIkV2Qy24H3oqXspKdxvuD8RqqxOBMn8SRNqFzreSUcrrTMYIyB0CSScfXXn6PN3NzqA5bcpzlm05RU2hexLJPT+k5H20VmqlGkvyI7DyHHYxCXkJO7ZIyM/TUQy52BwSPEKN1LUPhdwdO8cH8hLdxnptMtWWzadtLdNXqDK5L0qW8VIgR0jdWw6nGATnGgTP4bVyl0Sl12pLYSzVw45HTzFbikpOOYjtknbRo4mVdNN4nXr649FjT3o8VEFUyQuOFxwklXItIyTzdu+q9xAlS26PZ9KkpKHoVGbU4hXVKnFFW/0xpdLVyZpQRo21u++v8AvgmeBUTKmqjiOxuT+Ah03w8ffpLUwT2S+64ptEYNqKzy8uTnoPeGrNReA8iXIaS9PL3OAosRWCXPkc9NWThZKpK6uzBrUf1hkOl5CeYg7pwoAjvjBx35caaq16JRqVAC6M2gsv8A8TxgeYuA/H/GttBOJWkO+oenHt+F5x6mko6t0Q0bx4eKR+rtU55CLfpEdVLiqfDbz/Llx3BxlR8vhptuC9vWraNqMUi3pzEp4oEiWpLoU4twjcqA6eWqVxv4KxZFFTPs+30Gd6yp2UhgkqcSodkk4674GtHgTZkyw4tRuu5YzlMjNMqI8deFY7+z9O/fU5pmy66t9O9TUQ0k1MJYTlcNLbklfPpHT01W6KJQ2TzOtMlRA/U6sAD7J1zfSWltxRRKQFe1App5/gVYSB/6nW1YcVziVxPlXdOT4VPgOetK8TokAYaR9AOY/LQu40Xh/qq5501BPhyHeVoeTSNk/fr9dRC3t32H3uHkOU9t8k1od+xG5zv5v2HjqPJDbU1Dqau65YsaJ/BfiS5ZVfadcythQ8J9vO62ie3xT1GhiOuvSO8qNIafQAVNqCgFDIJHmO40JW0fzDLDRw1BTTCcS+SlJcMzHCzh1HuNweqbZ3h2u5eILN02PWPw6AsB+RLQ3kBw9Utg7K5h7wOwOu1UYtXtO5V1qnshybIH/Gwub2KgkD32iei+5T27ZGt3g5xZot/0JiKyGINUjNhD0FOEgY25kD9J/bXIuniHUKRWZkC6KEt+lLeKI6UMlPKkH2XA7ndRG+BjcgA6Q9j2RLSLFGT1j6nKXG4aLDrbi6tsOq2Vf8qMJEKFJqjLYeTGmxx47A69FDt8Ncmu8B6BdNcmVmrT6k8/JUDyocCEtpAwEjboBr0Zg02rJakU2fEnuTIwCG5jngzQyo5CUuD2t8dwfnr5nU644jgdg1O46esKz4TraJjPy2IONeXMa7Rwusp6qandnhcWnqFWKl6L0AOB6i3DMirSeZIfQF8p+BGDq8WTbdQsSA4uv3KzIR7RVlAbbx2Vufe6589cNS74lSG1vXBUeQKBLUSkcgOD0JJ7/Pz16zLGdr8p6XUYMhbJcW8n8XlZbZB3OG0dQMdz01qFLEHh4bqFvqcTqalgZO/MB138919V/iM7XvFgWutLcRB5ZVWdyltA7pb7lXljfy1XLv4c3NXLQS3R33G4iHQ+qnv5Dkrb+YR+U9w3999WeFFiBxMK332qpUUpwiYGgqHTyU8yVBtJxuOhGST1OrTR6u7TrUj1C5nkRJDLOZbr2EAKBIKvIZxn663PYHgtPKHp6h9PI2aPdpuOUCr2uyj2HYrdoW1J8R6SjxKlLI5VjPvJI6hR6Y7DS5VCaqdJU8rIB2SP0jy0Q+O3Eek3/c/jUOC2zEYHIqSE8q5av1KHkO3fQx00w6g7J3av32A6D3K94ljXb04po76nM8ndzvYcBTU1NTTZV1fWprONY5T5am6xbFNqM2jz2p9PlOxZTJ5kOtK5VJOmCs70oIkynt0e/qWJjRAQqY0kKyPNSPP4jS7YOscutEsDJBZwXtkjmG4TgxLFsS+WFzbVuZ1ctLAEXEs8zKx7pUPewMAY7Aa76qDftAtdEKivRnJq5ZfVzPlaY7IA/hIU4CVFRHU9MnSSxZcmC8l+I85HdT0W0opUPqNWaNxZv6Kz4LF2VVKM5wXs/udL34dY/ocim1fUJl2aPxakxcsS3oTrrj7khLrjfVShy8mx6Jz9tb9v2PccGZBqlwVVplDQQJBfkqWrlSFBTY35ShfNk5320rg4v8QU/wDN1W/8uuVWbzuO48/i9bqE0EAEOvEggfDpqG4c6+rlJqxwEzMniNwt4OCQKI6uq1Rwci24rmQcE4Cj7oxnGRvtoDcSuMdy8SXlNTpHq1MCuZuCycIHlzH8x+eqJy46DU5To2Gkjj13KHknc5YA21nGs41MfDRS0rGNTX1jU1ixf//Z" alt="Escudo GRUP7"></div>
     <h2>Seguimiento de Tareas</h2>
     <p class="sub" id="lBase">Grupo Aéreo N.° 7</p>
+    <div id="lBioZona" class="oculto"><button type="button" class="bio" id="bBio">👆 Ingresar con huella o rostro</button>
+    <button type="button" class="lnk" id="bVerClave">Ingresar con código y clave (respaldo)</button></div>
+    <div id="lClaveZona">
+    <div class="sep oculto" id="lSep">con código y clave</div>
     <label for="lCodigo">Código del período</label>
     <input id="lCodigo" maxlength="7" placeholder="ABC-123" inputmode="text" required>
     <div class="ayuda">Lo distribuye el Comando cada 3 días.</div>
@@ -200,7 +227,9 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
     <input id="lClave" maxlength="11" placeholder="XXXXX-XXXXX" type="password" required>
     <div class="ayuda">Personal e intransferible. La entrega el administrador.</div>
     <button class="btn p ancho" id="bLogin" type="submit">Ingresar</button>
+    </div>
     <div class="err" id="lErr"></div>
+    <button type="button" class="btn ancho" id="bBioReg" style="margin-top:12px">🆕 Tengo una invitación (registrarme)</button>
     <div class="pie">Uso exclusivo del personal autorizado. Cada acceso queda registrado.</div>
   </form>
 </section>
@@ -219,6 +248,8 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
     <button data-v="panel" class="on">Panel</button>
     <button data-v="tareas">Tareas</button>
     <button data-v="usuarios" class="oculto" id="tabUsuarios">Personal y claves</button>
+    <button data-v="solicitudes" class="oculto" id="tabSolicitudes">Solicitudes de alta <span class="badge oculto" id="nSol"></span></button>
+    <button data-v="cargos" class="oculto" id="tabCargos">Padrón de cargos</button>
   </nav>
   <main>
     <!-- PANEL -->
@@ -263,12 +294,34 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
     <!-- USUARIOS (solo admin) -->
     <section id="vUsuarios" class="oculto">
       <div class="filtros">
-        <button class="btn p" id="bNuevoUsuario">＋ Nuevo usuario</button>
+        <button class="btn p" id="bInvitarDni">✉ Invitar por DNI</button>
+        <button class="btn" id="bNuevoUsuario">＋ Nuevo usuario (con clave)</button>
         <button class="btn" id="bCodigo">Cambiar el código del período ahora</button>
         <input type="search" id="uTexto" placeholder="Buscar personal…">
       </div>
       <p class="cuenta" id="uCodigo"></p>
-      <div class="tabwrap"><table class="t"><thead><tr><th>Grado y nombre</th><th>Dependencia</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead><tbody id="uLista"></tbody></table></div>
+      <div class="tabwrap"><table class="t"><thead><tr><th>Grado y nombre</th><th>Dependencia y puesto</th><th>Rol</th><th>Estado</th><th>Huella / rostro</th><th>Último acceso</th><th></th></tr></thead><tbody id="uLista"></tbody></table></div>
+    </section>
+
+    <!-- SOLICITUDES DE ALTA (solo admin) -->
+    <section id="vSolicitudes" class="oculto">
+      <p class="cuenta">Personal nuevo que se registró con su invitación. Revise las fotos de su DNI y carné FAP y apruebe o rechace.
+      Si la persona figura en el <b>padrón de cargos</b>, se aplican obligatoriamente los datos del padrón. Al aprobar o rechazar, <b>las fotos se borran definitivamente</b>.</p>
+      <div id="solLista"></div>
+    </section>
+
+    <!-- PADRÓN DE CARGOS (solo admin) -->
+    <section id="vCargos" class="oculto">
+      <div class="filtros">
+        <button class="btn p" id="bPadronPdf">📄 Cargar PDF del padrón (la IA lo lee)</button>
+        <button class="btn" id="bCargoNuevo">＋ Agregar fila</button>
+        <button class="btn" id="bCargosCsv">⬇ Descargar lista (Excel/CSV)</button>
+        <input type="search" id="cTexto" placeholder="Buscar en el padrón…">
+        <input type="file" id="cPdf" accept="application/pdf,.pdf" class="oculto">
+      </div>
+      <p class="cuenta" id="cCuenta"></p>
+      <div class="tabwrap"><table class="t" id="cTabla"><thead><tr><th>DNI</th><th>Grado</th><th>Apellidos y nombres</th><th>Dependencia</th><th>Puesto / cargo</th><th></th></tr></thead><tbody id="cLista"></tbody></table></div>
+      <div class="mpie" style="position:sticky;bottom:0;background:#fff;border-top:1px solid var(--borde)"><span class="cuenta izq" id="cCambios"></span><button class="btn" id="bCargosDeshacer">Descartar cambios</button><button class="btn p" id="bCargosGuardar">💾 Guardar cambios</button></div>
     </section>
   </main>
   <button class="btn p flot" id="bNueva">＋ Nueva tarea</button>
@@ -305,18 +358,38 @@ const ERRORES = {
   no_puede_quitarse_admin: 'No puede quitarse a sí mismo el rol de administrador ni darse de baja.',
   error_servidor: 'Error en el servidor. Intente nuevamente en un momento.',
   red: 'No hay conexión con el servidor. Revise su internet.',
-  archivo_invalido: 'Tipo de archivo no permitido. Use PDF, Word, Excel, PowerPoint, imágenes, TXT, CSV o ZIP.',
+  archivo_invalido: 'Solo se aceptan PDF o imágenes (JPG, PNG, WEBP). Si es Word, Excel o PowerPoint, use «Guardar como › PDF» y súbalo.',
+  pendiente_aprobacion: 'Su registro está pendiente: el administrador debe aprobar su solicitud de alta. Intente más tarde.',
+  falta_solicitud: 'Primero envíe su solicitud de alta con sus datos y fotos.',
+  falta_consentimiento: 'Debe marcar la autorización de uso de sus datos para continuar.',
+  faltan_datos_registro: 'Complete grado, apellidos y nombres, dependencia y puesto.',
+  faltan_fotos: 'Falta alguna foto: DNI (anverso), DNI (reverso) y carné FAP.',
+  foto_ilegible: 'Una de las fotos es demasiado pequeña o borrosa. Tómela de nuevo, de cerca y con buena luz.',
+  solicitud_no_existe: 'La solicitud ya fue atendida.',
+  usar_solicitud: 'Esta persona tiene una solicitud de alta pendiente: apruébela en la pestaña «Solicitudes de alta».',
+  dni_repetido_padron: 'Hay un DNI repetido en el padrón: ',
+  cargo_no_existe: 'Esa fila del padrón ya no existe.',
   archivo_muy_grande: 'El archivo supera los 15 MB.',
   archivo_no_existe: 'El documento ya no existe.',
   ia_no_configurada: 'La revisión con IA aún no está activada: el administrador debe ingresar la clave en la hoja (menú Seguimiento › Configurar IA).',
   sin_evidencias: 'No hay fotos ni PDF subidos por personal de esta dependencia. Suba primero las evidencias.',
   solo_jefe: 'Solo el jefe de la dependencia (o el administrador) puede solicitar el levantamiento.',
   ia_error: 'La IA no pudo completar la revisión. Intente de nuevo en unos minutos.',
-  ia_sin_unidades: 'La IA no encontró en el MOF unidades con funciones relacionadas con esta tarea.'
+  ia_sin_unidades: 'La IA no encontró en el MOF unidades con funciones relacionadas con esta tarea.',
+  invitacion_invalida: 'DNI o código de invitación incorrecto, vencido o ya usado. Pida una nueva invitación al administrador.',
+  registro_invalido: 'No se pudo registrar este aparato. Intente de nuevo o use otro navegador actualizado.',
+  biometria_no_registrada: 'Esta huella o rostro no está registrado en el sistema. Use su código y clave, o pida una invitación.',
+  biometria_desactivada: 'El acceso con huella o rostro está desactivado para usted. Use su código y clave.',
+  biometria_invalida: 'No se pudo comprobar su identidad. Intente de nuevo.',
+  biometria_clonada: 'Por seguridad se bloqueó este ingreso. Avise al administrador.',
+  dni_invalido: 'El DNI debe tener 8 dígitos', dni_repetido: 'Ese DNI ya está registrado para otra persona.',
+  falta_dni: 'Primero registre el DNI de la persona y guarde.', usuario_inactivo: 'El usuario está dado de baja.',
+  conversion_fallo: 'No se pudo convertir el archivo a PDF. Guárdelo como PDF y vuelva a subirlo.',
+  marca_fallo: 'No se pudo poner la marca de agua a este archivo, por eso no se descargó.'
 };
 
 const S = {token: '', usuario: null, permisos: {}, base: '', deps: [], grupos: [], arbol: [], personal: [], documentos: [], levantamientos: [], abiertos: {}, vigenteHasta: '',
-           tareas: [], bitacora: [], fotos: [], usuarios: [], vista: 'panel', servidor: ''};
+           tareas: [], bitacora: [], fotos: [], usuarios: [], vista: 'panel', servidor: '', puestos: {}, solicitudes: []};
 const IMG = {}; // caché de imágenes: id+tam -> dataURL
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -350,7 +423,7 @@ function plazoTxt(t) {
 }
 function chip(e) { const x = ESTADOS[e] || ESTADOS.pendiente; return '<span class="chip" style="background:' + x.c + '">' + x.n + '</span>'; }
 function toast(m, err) { const t = $('#toast'); t.textContent = m; t.className = err ? 'err' : ''; clearTimeout(toast.h); toast.h = setTimeout(() => t.className = 'oculto', err ? 6000 : 3000); }
-function msgErr(e) { return ERRORES[e] || ('Error: ' + e); }
+function msgErr(e, extra) { return (ERRORES[e] || ('Error: ' + e)) + (extra ? ' ' + extra : ''); }
 let cargas = 0;
 function carga(on) { cargas += on ? 1 : -1; const b = $('#carga'); b.style.width = cargas > 0 ? '70%' : '100%'; if (cargas <= 0) setTimeout(() => { if (cargas <= 0) b.style.width = '0'; }, 300); }
 function guardarSesion() { try { sessionStorage.setItem('st_sesion', JSON.stringify({token: S.token})); } catch (e) {} }
@@ -409,6 +482,9 @@ async function entrar() {
   $('#hYo').textContent = [u.grado, u.nombre].filter(Boolean).join(' ');
   $('#hRol').textContent = ROLES[u.rol] || u.rol;
   $('#tabUsuarios').classList.toggle('oculto', !S.permisos.gestionarUsuarios);
+  $('#tabSolicitudes').classList.toggle('oculto', !S.permisos.gestionarUsuarios);
+  $('#tabCargos').classList.toggle('oculto', !S.permisos.gestionarUsuarios);
+  if (S.permisos.gestionarUsuarios) contarSolicitudes();
   llenarSelectDeps($('#fDep'), true);
   await cargarPersonal();
   await recargar();
@@ -459,8 +535,12 @@ function cambiarVista(v) {
   $('#vPanel').classList.toggle('oculto', v !== 'panel');
   $('#vTareas').classList.toggle('oculto', v !== 'tareas');
   $('#vUsuarios').classList.toggle('oculto', v !== 'usuarios');
-  $('#bNueva').classList.toggle('oculto', v === 'usuarios');
+  $('#vSolicitudes').classList.toggle('oculto', v !== 'solicitudes');
+  $('#vCargos').classList.toggle('oculto', v !== 'cargos');
+  $('#bNueva').classList.toggle('oculto', v === 'usuarios' || v === 'solicitudes' || v === 'cargos');
   if (v === 'usuarios') cargarUsuarios();
+  if (v === 'solicitudes') cargarSolicitudes();
+  if (v === 'cargos') cargarCargos();
   window.scrollTo(0, 0);
 }
 function irATareas(filtro) {
@@ -831,7 +911,7 @@ function pintarFotos(f, t) {
   const L = S.fotos.filter(x => x.taskId === t.id).sort((a, b) => b.fechaServidor.localeCompare(a.fechaServidor));
   const D = S.documentos.filter(x => x.taskId === t.id).sort((a, b) => b.fecha.localeCompare(a.fecha));
   const docsH = '<h4 style="margin:18px 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Documentos (' + D.length + ')</h4>' +
-    (t.editable ? '<div class="subir"><div class="campo"><label>Adjuntar documentos (PDF, Word, Excel, PowerPoint…) · máx. 15 MB c/u</label><input type="file" id="dArch" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.zip,.rar,.kml,.kmz,.jpg,.jpeg,.png,.webp"></div><div class="campo"><label>Comentario</label><input id="dCom" maxlength="500" placeholder="Qué contiene el documento"></div><button class="btn p" id="dSubir">Subir documentos</button><div class="cuenta" id="dEstado" style="margin-top:8px"></div></div>' : '') +
+    (t.editable ? '<div class="subir"><div class="campo"><label>Adjuntar documentos (solo PDF o imágenes) · máx. 15 MB c/u · Word o Excel: guárdelos primero como PDF</label><input type="file" id="dArch" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"></div><div class="campo"><label>Comentario</label><input id="dCom" maxlength="500" placeholder="Qué contiene el documento"></div><button class="btn p" id="dSubir">Subir documentos</button><div class="cuenta" id="dEstado" style="margin-top:8px"></div></div>' : '') +
     (D.length ? '<div class="docs">' + D.map(d => '<div class="doc"><span class="ext">' + esc((d.nombre.split('.').pop() || '').slice(0, 4)) + '</span><span class="n"><b title="' + esc(d.nombre) + '">' + esc(d.nombre) + '</b><small>' + fFechaHora(d.fecha) + ' · ' + esc((d.subidoPor || '').split(' – ')[0]) + ' · ' + Math.max(1, Math.round((+d.bytes || 0) / 1024)) + ' KB' + (d.comentario ? ' · ' + esc(d.comentario) : '') + '</small></span><button class="btn" data-doc="' + esc(d.id) + '">⬇ Descargar</button></div>').join('') + '</div>' : '<p class="cuenta">Aún no hay documentos.</p>');
   cont.innerHTML = '<h4 style="margin:0 0 6px;color:var(--azul);text-transform:uppercase;font-size:14px">Fotos (' + L.length + ')</h4>' + (t.editable ? '<div class="subir"><div class="campo"><label>Agregar fotos (puede elegir varias)</label><input type="file" id="fArch" accept="image/*" multiple></div><div class="campo"><label>Comentario</label><input id="fCom" maxlength="500" placeholder="Qué muestra la foto"></div><label class="chk" style="display:inline-flex"><input type="checkbox" id="fUbic" checked> Registrar ubicación GPS</label> <button class="btn p" id="fSubir" style="margin-left:8px">Subir foto</button><div class="cuenta" id="fEstado" style="margin-top:8px"></div></div>' : '') +
     (L.length ? '<div class="galeria">' + L.map(x => '<div class="foto" data-id="' + esc(x.id) + '"><div class="img">cargando…</div><div class="d">' + fFechaHora(x.fechaServidor) + '<br>' + esc((x.subidoPor || '').split(' – ')[0]) + (x.lat ? ' · 📍' : '') + '</div></div>').join('') + '</div>' : '<p class="cuenta">Aún no hay fotos.</p>') + docsH;
@@ -863,7 +943,9 @@ async function verFoto(x) {
   document.body.appendChild(v);
   v.querySelector('button').onclick = () => v.remove();
   v.addEventListener('click', e => { if (e.target === v) v.remove(); });
-  const src = await imagen(x.id, 'completa');
+  const j = await api('imagen', {id: x.id, tam: 'completa'});
+  let src = null;
+  if (j.ok) { try { src = await marcarImagen(j.imagen, j.marca); } catch (e) { src = null; } }
   if (!document.body.contains(v)) return;
   const ubic = x.lat ? '📍 <a href="https://www.google.com/maps?q=' + encodeURIComponent(x.lat + ',' + x.lng) + '" target="_blank" rel="noopener">' + (+x.lat).toFixed(5) + ', ' + (+x.lng).toFixed(5) + '</a>' + (x.precision_m ? ' (±' + esc(x.precision_m) + ' m)' : '') : 'Sin ubicación' + (x.ubicacionEstado ? ' (' + esc(x.ubicacionEstado) + ')' : '');
   v.innerHTML = '<button title="Cerrar">×</button>' + (src ? '<img src="' + src + '" alt="Evidencia">' : '<div>No se pudo cargar la imagen.</div>') +
@@ -928,6 +1010,8 @@ function leerArchivo(file) {
 async function subirDocs(f, t, cont) {
   const archs = [...cont.querySelector('#dArch').files], est = cont.querySelector('#dEstado'), b = cont.querySelector('#dSubir');
   if (!archs.length) { toast('Elija uno o más documentos primero.', true); return; }
+  const noPdf = archs.find(a => !/\.(pdf|jpe?g|png|webp)$/i.test(a.name));
+  if (noPdf) { toast('«' + noPdf.name + '»: ' + ERRORES.archivo_invalido, true); return; }
   const grande = archs.find(a => a.size > 15 * 1024 * 1024);
   if (grande) { toast('«' + grande.name + '» supera los 15 MB.', true); return; }
   b.disabled = true; let ok = 0;
@@ -948,9 +1032,228 @@ async function descargarDoc(id, btn) {
   const j = await api('descargar', {id: id});
   btn.disabled = false; btn.textContent = txt;
   if (!j.ok) { toast(msgErr(j.error), true); return; }
-  const bytes = Uint8Array.from(atob(j.datos), c => c.charCodeAt(0));
-  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], {type: j.tipo || 'application/octet-stream'})); a.download = j.nombre;
+  let bytes = Uint8Array.from(atob(j.datos), c => c.charCodeAt(0)), tipo = j.tipo || 'application/octet-stream', nombre = j.nombre;
+  btn.disabled = true; btn.textContent = 'Marcando…';
+  try {
+    if (/^image\//.test(tipo)) {
+      const url = await marcarImagen('data:' + tipo + ';base64,' + j.datos, j.marca);
+      tipo = url.slice(5, url.indexOf(';')); bytes = Uint8Array.from(atob(url.split(',')[1]), c => c.charCodeAt(0));
+      if (tipo === 'image/jpeg') nombre = nombre.replace(/\.[^.]+$/, '') + '.jpg';
+    } else if (tipo === 'application/pdf' || /\.pdf$/i.test(nombre)) {
+      bytes = await marcarPdf(bytes, j.marca); tipo = 'application/pdf';
+    } else throw new Error('formato');
+  } catch (e) {
+    btn.disabled = false; btn.textContent = txt;
+    if (S.usuario.rol !== 'admin') { toast(ERRORES.marca_fallo, true); return; }
+    toast('Aviso: este archivo se descargó SIN marca de agua (formato no compatible o PDF protegido).', true);
+  }
+  btn.disabled = false; btn.textContent = txt;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], {type: tipo})); a.download = nombre;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+/* ---------- marca de agua: grado y nombre de quien descarga, fecha y hora, en la esquina inferior derecha ---------- */
+function marcarImagen(dataUrl, marca) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth, h = img.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+      if (marca) {
+        const fs = Math.max(11, Math.round(Math.min(w, h * 1.5) * 0.018)), pad = Math.round(fs * 0.5);
+        g.font = 'bold ' + fs + 'px Arial, sans-serif';
+        let txt = 'Descargado por: ' + marca;
+        while (g.measureText(txt).width > w - 4 * pad && txt.length > 20) txt = txt.slice(0, -2);
+        const tw = g.measureText(txt).width;
+        g.fillStyle = 'rgba(255,255,255,0.72)'; g.fillRect(w - tw - 3 * pad, h - fs - 3 * pad, tw + 2 * pad, fs + 2 * pad);
+        g.fillStyle = 'rgba(11,42,91,0.95)'; g.textBaseline = 'top'; g.fillText(txt, w - tw - 2 * pad, h - fs - 2 * pad);
+      }
+      res(/^data:image\/png/.test(dataUrl) ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.92));
+    };
+    img.onerror = () => rej(new Error('imagen'));
+    img.src = dataUrl;
+  });
+}
+let PDFLIB = null;
+function cargarPdfLib() {
+  if (PDFLIB) return PDFLIB;
+  PDFLIB = new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+    sc.integrity = 'sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI'; sc.crossOrigin = 'anonymous';
+    sc.onload = () => res(window.PDFLib); sc.onerror = () => { PDFLIB = null; rej(new Error('pdf-lib')); };
+    document.head.appendChild(sc);
+  });
+  return PDFLIB;
+}
+async function marcarPdf(bytes, marca) {
+  const L = await cargarPdfLib();
+  const doc = await L.PDFDocument.load(bytes); // un PDF protegido con contraseña lanza error
+  const font = await doc.embedFont(L.StandardFonts.HelveticaBold);
+  const txt = ('Descargado por: ' + marca).replace(/[^\x20-\x7E -ÿ–—]/g, '?');
+  for (const p of doc.getPages()) {
+    const {width: w, height: h} = p.getSize(), rot = ((p.getRotation().angle % 360) + 360) % 360;
+    const ancho = rot === 90 || rot === 270 ? h : w;
+    let fs = 7.5; while (font.widthOfTextAtSize(txt, fs) > ancho - 30 && fs > 4) fs -= 0.5;
+    const tw = font.widthOfTextAtSize(txt, fs), m = 8;
+    // esquina inferior derecha tal como se ve la página (respeta páginas giradas)
+    const pos = {0: [w - tw - m, m, 0], 90: [w - m, h - tw - m, 90], 180: [tw + m, h - m, 180], 270: [m, tw + m, 270]}[rot] || [w - tw - m, m, 0];
+    const [x, y, a] = pos, rad = a * Math.PI / 180, cx = Math.cos(rad), sx = Math.sin(rad);
+    p.drawRectangle({x: x - 3 * cx + 3 * sx, y: y - 3 * sx - 3 * cx, width: tw + 6, height: fs + 5, rotate: L.degrees(a), color: L.rgb(1, 1, 1), opacity: 0.75});
+    p.drawText(txt, {x: x, y: y, size: fs, font: font, rotate: L.degrees(a), color: L.rgb(0.04, 0.16, 0.36)});
+  }
+  return await doc.save();
+}
+
+/* ---------- huella o rostro (passkeys) ---------- */
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const desB64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+const BIO_OK = !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
+if (BIO_OK) { $('#lBioZona').classList.remove('oculto'); $('#lClaveZona').classList.add('oculto'); }
+$('#bVerClave').onclick = () => { const z = $('#lClaveZona'), ver = z.classList.contains('oculto'); z.classList.toggle('oculto', !ver); $('#lSep').classList.toggle('oculto', !ver); if (ver) $('#lCodigo').focus(); };
+function errBio(e) {
+  if (e && e.name === 'NotAllowedError') return 'Se canceló o no se reconoció la huella / rostro. Intente de nuevo.';
+  if (e && e.name === 'InvalidStateError') return 'Este aparato ya está registrado para usted. Ya puede ingresar con su huella o rostro.';
+  if (e && e.name === 'NotSupportedError') return 'Este aparato no tiene lector de huella ni reconocimiento facial compatible.';
+  return 'No se pudo usar la huella o el rostro en este navegador. Actualícelo o use su código y clave.';
+}
+$('#bBio').onclick = async () => {
+  if (API_URL.indexOf('/exec') < 0) return;
+  const b = $('#bBio'); b.disabled = true; $('#lErr').textContent = '';
+  try {
+    const r = await api('bioReto');
+    if (!r.ok) { $('#lErr').textContent = msgErr(r.error); return; }
+    let cred;
+    try {
+      cred = await navigator.credentials.get({publicKey: {challenge: desB64u(r.reto), rpId: location.hostname, userVerification: 'required', timeout: 90000}});
+    } catch (e) { $('#lErr').textContent = errBio(e); return; }
+    const j = await api('bioLogin', {rid: r.rid, credId: cred.id, authData: b64u(cred.response.authenticatorData),
+      clientData: b64u(cred.response.clientDataJSON), firma: b64u(cred.response.signature), dispositivo: navigator.userAgent.slice(0, 150)});
+    if (!j.ok) { $('#lErr').textContent = msgErr(j.error); return; }
+    aplicarSesion(j); guardarSesion(); entrar();
+  } finally { b.disabled = false; }
+};
+$('#bBioReg').onclick = () => {
+  const f = modal('<div class="mcab"><h3>Registrarme con mi invitación</h3><button data-cerrar>×</button></div><div class="mcuerpo" id="rCuerpo">' +
+    '<p class="cuenta">Ingrese su DNI y el código de invitación que le entregó el administrador (sirve una sola vez y vence en 3 días).</p>' +
+    '<div class="fila2"><div class="campo"><label>DNI *</label><input id="rDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos"></div>' +
+    '<div class="campo"><label>Código de invitación *</label><input id="rInv" maxlength="9" placeholder="XXXX-XXXX" style="text-transform:uppercase"></div></div>' +
+    '<div class="err" id="rErr" style="color:var(--venc)"></div>' +
+    '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="rIr">Continuar</button></div>', true);
+  formatear(f.querySelector('#rInv'), [4, 4]);
+  f.querySelector('#rDni').addEventListener('input', e => e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8));
+  f.querySelector('#rIr').onclick = async () => {
+    const dni = f.querySelector('#rDni').value, inv = f.querySelector('#rInv').value, err = f.querySelector('#rErr'), b = f.querySelector('#rIr');
+    if (!/^\d{8}$/.test(dni) || inv.replace(/-/g, '').length !== 8) { err.textContent = 'Complete el DNI (8 dígitos) y el código de invitación.'; return; }
+    b.disabled = true; err.textContent = '';
+    const info = await api('invitacionInfo', {dni: dni, invitacion: inv, dispositivo: navigator.userAgent.slice(0, 150)});
+    b.disabled = false;
+    if (!info.ok) { err.textContent = msgErr(info.error); return; }
+    cerrar(f);
+    if (info.nuevo && !info.solicitudEnviada) formularioAlta(dni, inv, info);
+    else registrarAparato(dni, inv, info.nuevo);
+  };
+};
+
+/* Personal nuevo: datos, puesto y fotos de DNI y carné FAP */
+function formularioAlta(dni, inv, info) {
+  S.arbol = info.arbol || []; S.grupos = info.grupos || []; S.deps = S.arbol.map(x => x.ruta);
+  const fotos = {}, ETQ = {fotoDniFrente: '🪪 DNI – anverso (lado de la foto)', fotoDniReverso: '🪪 DNI – reverso', fotoCarne: '🎖 Carné FAP'};
+  const f = modal('<div class="mcab"><h3>Solicitud de alta</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
+    '<p class="cuenta">DNI <b>' + esc(dni) + '</b>. Complete sus datos tal como figuran en su DNI y elija <b>la dependencia y el puesto que ocupa actualmente</b>. El administrador los verificará con el padrón oficial.</p>' +
+    '<div class="fila2"><div class="campo"><label>Grado *</label><input id="aGrado" maxlength="40" placeholder="Ej.: MY. FAP, TCO1 FAP, EC" list="lGrados"></div>' +
+    '<div class="campo"><label>Apellidos y nombres *</label><input id="aNombre" maxlength="100" placeholder="Pérez Ruiz, Juan Carlos"></div></div>' +
+    '<datalist id="lGrados">' + ['GRAL. FAP', 'MAG. FAP', 'COR. FAP', 'CMDTE. FAP', 'MAY. FAP', 'CAP. FAP', 'TTE. FAP', 'ALF. FAP', 'TCO. SUP. FAP', 'TCO1 FAP', 'TCO2 FAP', 'TCO3 FAP', 'SO1 FAP', 'SO2 FAP', 'SO3 FAP', 'EC FAP', 'SMV FAP'].map(g => '<option value="' + g + '">').join('') + '</datalist>' +
+    '<div class="campo"><label>Dependencia donde trabaja actualmente *</label><input type="search" id="aDepQ" placeholder="Buscar dependencia…" style="margin-bottom:4px"><select id="aDep" size="7"></select></div>' +
+    '<div class="campo"><label>Puesto que ocupa actualmente *</label><select id="aPuesto"><option value="">— Elija primero la dependencia —</option></select>' +
+    '<input id="aPuestoOtro" class="oculto" maxlength="120" placeholder="Escriba su puesto" style="margin-top:6px"></div>' +
+    '<label style="margin-top:10px;display:block;font-weight:bold;font-size:13px">Fotos (tómelas de cerca, con buena luz y sin reflejos) *</label>' +
+    '<div class="fotos3">' + Object.keys(ETQ).map(k => '<label id="l_' + k + '"><span>' + ETQ[k] + '<br><small>Tocar para tomar o elegir</small></span><input type="file" accept="image/*" capture="environment" data-k="' + k + '"></label>').join('') + '</div>' +
+    '<label class="consent"><input type="checkbox" id="aOk"><span>' + esc(info.consentimiento) + '</span></label>' +
+    '<div class="err" id="aErr" style="color:var(--venc);margin-top:8px"></div>' +
+    '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="aEnviar">Enviar solicitud</button></div>');
+  const selDep = f.querySelector('#aDep'), selP = f.querySelector('#aPuesto'), otro = f.querySelector('#aPuestoOtro');
+  const pintarDep = () => {
+    const q = f.querySelector('#aDepQ').value.trim().toLowerCase(), v = selDep.value;
+    let h = '';
+    S.grupos.forEach(g => {
+      const L = S.arbol.filter(x => x.grupo === g.grupo && (!q || x.ruta.toLowerCase().indexOf(q) >= 0));
+      if (L.length) h += '<optgroup label="' + esc(g.grupo) + '">' + L.map(x => '<option value="' + esc(x.ruta) + '" title="' + esc(x.ruta) + '"' + (x.ruta === v ? ' selected' : '') + '>' + (q ? esc(corto(x.ruta)) : '   '.repeat(x.nivel) + (x.nivel ? '└ ' : '') + esc(x.nombre)) + '</option>').join('') + '</optgroup>';
+    });
+    selDep.innerHTML = h || '<option disabled>Sin resultados</option>';
+  };
+  const pintarPuestos = () => {
+    const L = (info.puestos || {})[selDep.value] || [];
+    selP.innerHTML = (L.length ? '<option value="">— Elija su puesto —</option>' : '<option value="">— Elija primero la dependencia —</option>') +
+      L.map(x => '<option>' + esc(x) + '</option>').join('') + (selDep.value ? '<option value="__otro">Otro puesto (escribirlo)</option>' : '');
+    otro.classList.add('oculto');
+  };
+  f.querySelector('#aDepQ').addEventListener('input', pintarDep);
+  selDep.onchange = pintarPuestos;
+  selP.onchange = () => otro.classList.toggle('oculto', selP.value !== '__otro');
+  pintarDep();
+  f.querySelectorAll('.fotos3 input').forEach(inp => inp.onchange = async () => {
+    const file = inp.files[0], lab = f.querySelector('#l_' + inp.dataset.k); if (!file) return;
+    try {
+      fotos[inp.dataset.k] = await comprimir(file, 1800, 0.88);
+      lab.classList.add('ok'); lab.querySelector('span').innerHTML = '<img src="' + fotos[inp.dataset.k] + '" alt=""><br><small>✓ ' + ETQ[inp.dataset.k] + ' · tocar para cambiar</small>';
+    } catch (e) { toast(ERRORES.imagen_invalida, true); }
+  });
+  f.querySelector('#aEnviar').onclick = async () => {
+    const err = f.querySelector('#aErr'), b = f.querySelector('#aEnviar');
+    const d = {dni: dni, invitacion: inv, grado: f.querySelector('#aGrado').value.trim(), nombre: f.querySelector('#aNombre').value.trim(),
+      dependencia: selDep.value, cargo: selP.value === '__otro' ? otro.value.trim() : selP.value, fotos: fotos, consentimiento: f.querySelector('#aOk').checked,
+      dispositivo: navigator.userAgent.slice(0, 150)};
+    if (!d.grado || !d.nombre || !d.dependencia || !d.cargo) { err.textContent = ERRORES.faltan_datos_registro; return; }
+    if (Object.keys(ETQ).some(k => !fotos[k])) { err.textContent = ERRORES.faltan_fotos; return; }
+    if (!d.consentimiento) { err.textContent = ERRORES.falta_consentimiento; return; }
+    b.disabled = true; b.textContent = 'Enviando…'; err.textContent = '';
+    const j = await api('solicitud', d);
+    b.disabled = false; b.textContent = 'Enviar solicitud';
+    if (!j.ok) { err.textContent = msgErr(j.error); return; }
+    cerrar(f);
+    if (BIO_OK) registrarAparato(dni, inv, true);
+    else avisoPendiente(false);
+  };
+}
+function avisoPendiente(conHuella) {
+  const f = modal('<div class="mcab"><h3>Solicitud enviada</h3></div><div class="mcuerpo"><p>✅ Su solicitud de alta fue enviada al administrador.</p>' +
+    (conHuella ? '<p>Su huella o rostro quedó registrado en este aparato. <b>Cuando el administrador apruebe su solicitud</b>, ingrese con «👆 Ingresar con huella o rostro».</p>'
+               : '<p>Este aparato no permite ingresar con huella o rostro. Cuando el administrador apruebe su solicitud, le entregará una clave personal.</p>') +
+    '</div><div class="mpie"><button class="btn p" data-cerrar>Entendido</button></div>', true);
+}
+/* Registra la huella o el rostro de este aparato (passkey) */
+async function registrarAparato(dni, inv, nuevo) {
+  const f = modal('<div class="mcab"><h3>Registrar huella o rostro</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
+    '<p class="cuenta">Use el celular o la computadora con el que ingresará. Su huella o rostro <b>no se envía</b> a ningún lado: el aparato la comprueba y solo entrega una firma digital.</p>' +
+    (BIO_OK ? '' : '<p class="err" style="color:var(--venc)">Este navegador no permite huella ni rostro. Use un celular o computadora actualizados (Chrome, Edge o Safari).</p>') +
+    '<div class="err" id="rErr" style="color:var(--venc)"></div></div><div class="mpie"><button class="btn" data-cerrar>Ahora no</button><button class="btn p" id="rIr"' + (BIO_OK ? '' : ' disabled') + '>👆 Registrar ahora</button></div>', true);
+  f.querySelectorAll('[data-cerrar]').forEach(x => x.addEventListener('click', () => { if (nuevo) avisoPendiente(false); }));
+  f.querySelector('#rIr').onclick = async () => {
+    const err = f.querySelector('#rErr'), b = f.querySelector('#rIr');
+    b.disabled = true; err.textContent = '';
+    try {
+      const r = await api('bioInvitacion', {dni: dni, invitacion: inv, dispositivo: navigator.userAgent.slice(0, 150)});
+      if (!r.ok) { err.textContent = msgErr(r.error); return; }
+      let cred;
+      try {
+        cred = await navigator.credentials.create({publicKey: {challenge: desB64u(r.reto), rp: {id: location.hostname, name: 'Seguimiento de Tareas – GRUP7'},
+          user: {id: desB64u(r.usuario.id), name: r.usuario.nombre, displayName: r.usuario.mostrar || r.usuario.nombre},
+          pubKeyCredParams: [{type: 'public-key', alg: -7}, {type: 'public-key', alg: -257}],
+          authenticatorSelection: {residentKey: 'required', requireResidentKey: true, userVerification: 'required'},
+          excludeCredentials: (r.excluir || []).map(id => ({type: 'public-key', id: desB64u(id)})), attestation: 'none', timeout: 120000}});
+      } catch (e) { err.textContent = errBio(e); return; }
+      const R = cred.response;
+      if (!R.getPublicKey || !R.getAuthenticatorData) { err.textContent = errBio(); return; }
+      const j = await api('bioRegistro', {rid: r.rid, dni: dni, invitacion: inv, credId: cred.id, alg: R.getPublicKeyAlgorithm(),
+        llave: b64u(R.getPublicKey()), authData: b64u(R.getAuthenticatorData()), clientData: b64u(R.clientDataJSON), dispositivo: navigator.userAgent.slice(0, 150)});
+      if (!j.ok) { err.textContent = msgErr(j.error); return; }
+      cerrar(f);
+      if (j.pendiente) { avisoPendiente(true); return; }
+      aplicarSesion(j); guardarSesion(); entrar();
+      toast('¡Listo! Desde ahora puede ingresar en este aparato con su huella o rostro.');
+    } finally { b.disabled = false; }
+  };
 }
 
 /* ---------- personal y claves (admin) ---------- */
@@ -958,7 +1261,7 @@ async function cargarUsuarios() {
   if (!S.permisos.gestionarUsuarios) return;
   const j = await api('usuarios');
   if (!j.ok) { toast(msgErr(j.error), true); return; }
-  S.usuarios = j.usuarios; pintarUsuarios();
+  S.usuarios = j.usuarios; S.puestos = j.puestos || S.puestos || {}; pintarUsuarios();
   $('#uCodigo').textContent = S.vigenteHasta ? 'Código del período vigente hasta el ' + fFechaHora(S.vigenteHasta) + '. El código llega a su correo.' : '';
 }
 $('#uTexto').addEventListener('input', pintarUsuarios);
@@ -967,31 +1270,63 @@ function pintarUsuarios() {
   const orden = S.deps;
   const L = S.usuarios.filter(u => !q || (u.grado + ' ' + u.nombre + ' ' + u.dependencia + ' ' + u.rol).toLowerCase().indexOf(q) >= 0)
     .sort((a, b) => (orden.indexOf(a.dependencia) - orden.indexOf(b.dependencia)) || a.nombre.localeCompare(b.nombre));
-  $('#uLista').innerHTML = L.length ? L.map(u => '<tr class="' + (u.activo === 'SI' ? '' : 'baja') + '"><td><b>' + esc([u.grado, u.nombre].filter(Boolean).join(' ')) + '</b></td><td title="' + esc(u.dependencia) + '">' + esc(corto(u.dependencia)) + '</td><td>' + esc(ROLES[u.rol] || u.rol) + '</td><td>' + (u.activo === 'SI' ? '<span style="color:var(--term)">● Activo</span>' : '○ De baja') + '</td><td>' + (u.ultimoAcceso ? fFechaHora(u.ultimoAcceso) : 'Nunca') + '</td><td><button class="btn" data-u="' + esc(u.id) + '">Editar</button></td></tr>').join('') : '<tr><td colspan="6" class="cuenta">Sin resultados.</td></tr>';
-  $$('#uLista [data-u]').forEach(b => b.onclick = () => abrirUsuario(S.usuarios.filter(u => u.id === b.dataset.u)[0]));
+  $('#uLista').innerHTML = L.length ? L.map(u => '<tr class="' + (u.activo === 'SI' ? '' : u.activo === 'PENDIENTE' ? 'pend' : 'baja') + '"><td><b>' + esc([u.grado, u.nombre].filter(Boolean).join(' ') || 'DNI ' + (u.dni || '')) + '</b></td><td title="' + esc(u.dependencia) + '">' + esc(corto(u.dependencia) || '—') + (u.cargo ? '<br><small>' + esc(u.cargo) + '</small>' : '') + '</td><td>' + esc(ROLES[u.rol] || u.rol) + '</td><td>' + (u.activo === 'SI' ? '<span style="color:var(--term)">● Activo</span>' : u.activo === 'PENDIENTE' ? '<span style="color:var(--pausa)">⏳ Pendiente de alta</span>' : '○ De baja') + '</td><td>' + bioEstado(u) + '</td><td>' + (u.ultimoAcceso ? fFechaHora(u.ultimoAcceso) : 'Nunca') + '</td><td><button class="btn" data-u="' + esc(u.id) + '">Editar</button></td></tr>').join('') : '<tr><td colspan="7" class="cuenta">Sin resultados.</td></tr>';
+  $$('#uLista [data-u]').forEach(b => b.onclick = () => { const u = S.usuarios.filter(x => x.id === b.dataset.u)[0];
+    if (u.activo === 'PENDIENTE') { if (u.nombre) { cambiarVista('solicitudes'); } else invitarDni(u.dni); return; } abrirUsuario(u); });
 }
 $('#bNuevoUsuario').onclick = () => abrirUsuario(null);
+function bioEstado(u) {
+  if (u.biometria === 'SI' && u.aparatos) return '<span style="color:var(--term)">👆 Activa (' + u.aparatos + (u.aparatos === 1 ? ' aparato' : ' aparatos') + ')</span>';
+  if (u.biometria === 'SI' && u.invitacionVence) return '<span style="color:var(--pausa)">✉ Invitación pendiente</span>';
+  return '<span style="color:var(--gris)">—</span>';
+}
 function abrirUsuario(u) {
   const nuevo = !u, v = u || {grado: '', nombre: '', dependencia: S.deps[0], rol: 'usuario', activo: 'SI'};
   const yo = u && u.id === S.usuario.id;
   const f = modal('<div class="mcab"><h3>' + (nuevo ? 'Nuevo usuario' : 'Editar usuario') + '</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
     '<div class="fila2"><div class="campo"><label>Grado</label><input id="uGrado" maxlength="40" placeholder="Ej.: MY. FAP" value="' + esc(v.grado) + '"></div>' +
     '<div class="campo"><label>Apellidos y nombres *</label><input id="uNombre" maxlength="100" value="' + esc(v.nombre) + '"></div></div>' +
+    '<div class="fila2"><div class="campo"><label>DNI (para huella o rostro y marca de agua)</label><input id="uDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos" value="' + esc(v.dni || '') + '"></div><div></div></div>' +
     '<div class="fila2"><div class="campo"><label>Dependencia</label><select id="uDep"></select></div>' +
+    '<div class="campo"><label>Puesto (según el MOF)</label><select id="uPuesto"></select></div></div><div class="fila2">' +
     '<div class="campo"><label>Rol</label><select id="uRol"' + (yo ? ' disabled' : '') + '>' + Object.keys(ROLES).map(r => '<option value="' + r + '"' + (r === v.rol ? ' selected' : '') + '>' + ROLES[r] + '</option>').join('') + '</select></div></div>' +
     '<p class="cuenta">Cada persona trabaja las tareas de su unidad y de todas las que dependen de ella. <b>Usuario:</b> crea y edita tareas de su dependencia. <b>Jefe:</b> además puede eliminarlas. <b>Administrador:</b> todo, incluido el personal y las claves.</p>' +
     (nuevo ? '' : '<label class="chk" style="display:inline-flex"><input type="checkbox" id="uActivo"' + (v.activo === 'SI' ? ' checked' : '') + (yo ? ' disabled' : '') + '> Activo (desmarque para dar de baja)</label>') +
+    (nuevo ? '' : '<div class="biocaja"><h4>Ingreso con huella o rostro</h4><p class="cuenta" style="margin:0 0 8px">Estado: ' + bioEstado(v) + (v.invitacionVence ? ' · vence ' + fFechaHora(v.invitacionVence) : '') + '</p>' +
+      '<button class="btn" id="uInvitar">' + (v.biometria === 'SI' ? (v.aparatos ? '➕ Invitar otro aparato' : '✉ Nueva invitación') : '✅ Activar e invitar') + '</button> ' +
+      (v.biometria === 'SI' ? '<button class="btn" id="uQuitarBio">⛔ Desactivar huella/rostro</button>' : '') + '</div>') +
     '</div><div class="mpie">' + (nuevo ? '' : '<button class="btn izq" id="uClave">Generar nueva clave</button>') + '<button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="uGuardar">' + (nuevo ? 'Crear y generar clave' : 'Guardar') + '</button></div>', true);
   llenarSelectDeps(f.querySelector('#uDep'), false, v.dependencia);
+  const llenarPuesto = () => { const L = (S.puestos[f.querySelector('#uDep').value] || []).slice(); if (v.cargo && L.indexOf(v.cargo) < 0) L.unshift(v.cargo);
+    f.querySelector('#uPuesto').innerHTML = '<option value="">— Sin puesto —</option>' + L.map(x => '<option' + (x === v.cargo ? ' selected' : '') + '>' + esc(x) + '</option>').join(''); };
+  f.querySelector('#uDep').addEventListener('change', llenarPuesto); llenarPuesto();
   f.querySelector('#uGuardar').onclick = async () => {
     const d = {id: u ? u.id : '', grado: f.querySelector('#uGrado').value.trim(), nombre: f.querySelector('#uNombre').value.trim(),
-      dependencia: f.querySelector('#uDep').value, rol: f.querySelector('#uRol').value, activo: nuevo || f.querySelector('#uActivo').checked ? 'SI' : 'NO'};
+      dependencia: f.querySelector('#uDep').value, rol: f.querySelector('#uRol').value, activo: nuevo || f.querySelector('#uActivo').checked ? 'SI' : 'NO',
+      dni: f.querySelector('#uDni').value.trim(), cargo: f.querySelector('#uPuesto').value};
     if (!d.nombre) { toast(ERRORES.falta_nombre, true); return; }
+    if (d.dni && !/^\d{8}$/.test(d.dni)) { toast(ERRORES.dni_invalido, true); return; }
     const j = await api('guardarUsuario', {usuario: d});
     if (!j.ok) { toast(msgErr(j.error), true); return; }
     cerrar(f);
-    if (j.clave) mostrarClave(d, j.clave); else toast('Usuario actualizado');
+    if (j.clave) mostrarClave(d, j.clave); else toast('Usuario actualizado' + (j.corregido && j.corregido.length ? ' (se aplicaron los datos del padrón: ' + j.corregido.map(c => c.campo).join(', ') + ')' : ''));
     cargarUsuarios(); cargarPersonal().then(pintarPanel);
+  };
+  f.querySelector('#uDni').addEventListener('input', e => e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8));
+  const bi = f.querySelector('#uInvitar');
+  if (bi) bi.onclick = async () => {
+    if (f.querySelector('#uDni').value !== (v.dni || '')) { toast('Primero guarde el DNI.', true); return; }
+    const j = await api('invitarBio', {id: u.id});
+    if (!j.ok) { toast(msgErr(j.error), true); return; }
+    cerrar(f); mostrarInvitacion(v, j.invitacion, j.vence); cargarUsuarios();
+  };
+  const bq = f.querySelector('#uQuitarBio');
+  if (bq) bq.onclick = async () => {
+    const ok = await confirmar('Desactivar huella o rostro', '<p><b>' + esc(v.nombre) + '</b> ya no podrá ingresar con huella o rostro en ningún aparato. Podrá seguir ingresando con su código y clave.</p>', 'Desactivar');
+    if (!ok) return;
+    const j = await api('quitarBio', {id: u.id});
+    if (!j.ok) { toast(msgErr(j.error), true); return; }
+    cerrar(f); toast('Huella / rostro desactivado'); cargarUsuarios();
   };
   const bc = f.querySelector('#uClave');
   if (bc) bc.onclick = async () => {
@@ -1001,6 +1336,13 @@ function abrirUsuario(u) {
     if (!j.ok) { toast(msgErr(j.error), true); return; }
     cerrar(f); mostrarClave(v, j.clave); cargarUsuarios();
   };
+}
+function mostrarInvitacion(u, cod, vence, nuevo) {
+  const etq = [u.grado, u.nombre].filter(Boolean).join(' ') || 'DNI ' + (u.dni || '');
+  const msg = 'Seguimiento de Tareas ' + S.base + ' | ' + etq + ' | Abra ' + location.origin + location.pathname + ' en su celular o computadora, pulse «Tengo una invitación (registrarme)», ingrese su DNI y este código: ' + cod +
+    (nuevo ? '. Tenga a la mano su DNI y su carné FAP para fotografiarlos' : '') + '. Un solo uso; vence el ' + fFechaHora(vence) + '. No lo comparta.';
+  const f = modal('<div class="mcab"><h3>Código de invitación</h3></div><div class="mcuerpo"><p><b>' + esc(etq) + '</b> · DNI ' + esc(u.dni || '') + '</p><div class="clave">' + esc(cod) + '</div><p class="cuenta">Sirve <b>una sola vez</b> y vence el ' + fFechaHora(vence) + '. Entréguelo en persona o por un medio seguro: <b>no se volverá a mostrar</b>.</p></div><div class="mpie"><button class="btn" id="iCopiar">Copiar mensaje para entregar</button><button class="btn p" data-cerrar>Listo</button></div>', true);
+  f.querySelector('#iCopiar').onclick = () => navigator.clipboard.writeText(msg).then(() => toast('Mensaje copiado'), () => toast('No se pudo copiar; anote el código.', true));
 }
 function mostrarClave(u, clave) {
   const etq = [u.grado, u.nombre].filter(Boolean).join(' ') + ' – ' + u.dependencia;
@@ -1014,6 +1356,168 @@ $('#bCodigo').onclick = async () => {
   const j = await api('regenerarCodigo');
   if (!j.ok) { toast(msgErr(j.error), true); return; }
   S.vigenteHasta = j.vigenteHasta || S.vigenteHasta; toast('Código cambiado. Revise su correo.'); cargarUsuarios();
+};
+
+/* ---------- invitar por DNI (admin) ---------- */
+$('#bInvitarDni').onclick = () => invitarDni('');
+function invitarDni(dniIni) {
+  const f = modal('<div class="mcab"><h3>Invitar por DNI</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
+    '<p class="cuenta">Escriba el DNI. Si la persona aún no está en el sistema, al registrarse elegirá su dependencia y puesto y subirá las fotos de su DNI y carné FAP; usted aprobará la solicitud. Si ya está registrada, la invitación le sirve para registrar la huella o rostro de un aparato nuevo.</p>' +
+    '<div class="campo"><label>DNI *</label><input id="iDni" inputmode="numeric" maxlength="8" placeholder="8 dígitos" value="' + esc(dniIni || '') + '"></div>' +
+    '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="iIr">Generar invitación</button></div>', true);
+  const inp = f.querySelector('#iDni'); inp.addEventListener('input', () => inp.value = inp.value.replace(/\D/g, '').slice(0, 8)); inp.focus();
+  f.querySelector('#iIr').onclick = async () => {
+    if (!/^\d{8}$/.test(inp.value)) { toast(ERRORES.dni_invalido, true); return; }
+    const j = await api('invitarDni', {dni: inp.value});
+    if (!j.ok) { toast(msgErr(j.error), true); return; }
+    cerrar(f);
+    const u = Object.assign({dni: inp.value}, j.usuario || {});
+    if (!u.nombre && j.padron) { u.grado = j.padron.grado; u.nombre = j.padron.nombre; }
+    mostrarInvitacion(u, j.invitacion, j.vence, j.nuevo);
+    cargarUsuarios();
+  };
+}
+
+/* ---------- solicitudes de alta (admin) ---------- */
+const CAMPOS = {grado: 'Grado', nombre: 'Apellidos y nombres', dependencia: 'Dependencia', cargo: 'Puesto'};
+async function contarSolicitudes() {
+  const j = await api('solicitudes'); if (!j.ok) return;
+  S.solicitudes = j.solicitudes || [];
+  const n = S.solicitudes.length, b = $('#nSol'); b.textContent = n; b.classList.toggle('oculto', !n);
+  return j;
+}
+async function cargarSolicitudes() {
+  const j = await contarSolicitudes(); if (!j) return;
+  if (!S.puestos || !Object.keys(S.puestos).length) { const u = await api('usuarios'); if (u.ok) S.puestos = u.puestos || {}; }
+  const L = S.solicitudes;
+  $('#solLista').innerHTML = L.length ? L.map(x => {
+    const dif = {}; (x.discrepancias || []).forEach(d => dif[d.campo] = d);
+    return '<div class="solc"><h4>' + esc([x.grado, x.nombre].join(' ')) + ' · DNI ' + esc(x.dni) + '</h4><div class="cuenta">Enviada el ' + fFechaHora(x.fecha) + ' · ' +
+      (x.aparatos ? '👆 Huella/rostro registrado (' + x.aparatos + ')' : '⚠ Sin huella/rostro registrado: tras aprobar, genérele una clave') + '</div>' +
+      '<table><tr><th></th><th>Declarado</th><th>Padrón del administrador</th></tr>' + Object.keys(CAMPOS).map(k => '<tr><th>' + CAMPOS[k] + '</th><td' + (dif[k] ? ' class="dif"' : '') + '>' + esc(k === 'dependencia' ? corto(x[k]) : x[k]) + '</td><td>' +
+        (x.padron ? esc(k === 'dependencia' ? corto(x.padron[k]) : x.padron[k]) || '—' : '<span class="cuenta">No figura</span>') + '</td></tr>').join('') + '</table>' +
+      (x.padron ? (x.discrepancias.length ? '<p class="dif">Hay diferencias: al aprobar se aplicarán los datos del padrón.</p>' : '<p style="color:var(--term)">✓ Coincide con el padrón.</p>') : '<p class="cuenta">No figura en el padrón: revise bien las fotos antes de aprobar.</p>') +
+      '<div class="selbar"><button class="btn" data-ver="fotoDniFrente" data-s="' + x.id + '">🪪 DNI anverso</button><button class="btn" data-ver="fotoDniReverso" data-s="' + x.id + '">🪪 DNI reverso</button><button class="btn" data-ver="fotoCarne" data-s="' + x.id + '">🎖 Carné FAP</button>' +
+      '<button class="btn" data-rech="' + x.id + '">✖ Rechazar</button><button class="btn p" data-apr="' + x.id + '">✔ Aprobar…</button></div></div>';
+  }).join('') : '<p class="cuenta">No hay solicitudes pendientes.</p>';
+  $$('#solLista [data-ver]').forEach(b => b.onclick = async () => {
+    b.disabled = true; const r = await api('fotoSolicitud', {id: b.dataset.s, cual: b.dataset.ver}); b.disabled = false;
+    if (!r.ok) { toast(msgErr(r.error), true); return; }
+    const v = document.createElement('div'); v.className = 'visor'; v.innerHTML = '<img src="' + r.imagen + '" alt=""><button class="btn">Cerrar</button>';
+    v.onclick = () => v.remove(); document.body.appendChild(v);
+  });
+  $$('#solLista [data-apr]').forEach(b => b.onclick = () => aprobarSol(L.filter(x => x.id === b.dataset.apr)[0]));
+  $$('#solLista [data-rech]').forEach(b => b.onclick = async () => {
+    const x = L.filter(y => y.id === b.dataset.rech)[0];
+    const f = modal('<div class="mcab"><h3>Rechazar solicitud</h3></div><div class="mcuerpo"><p><b>' + esc(x.nombre) + '</b> · DNI ' + esc(x.dni) + '</p><div class="campo"><label>Motivo</label><input id="rMot" maxlength="300" placeholder="Ej.: fotos ilegibles, no pertenece a la unidad"></div><p class="cuenta">Las fotos se borrarán y la invitación quedará anulada.</p></div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="rSi">Rechazar</button></div>', true);
+    f.querySelector('#rSi').onclick = async () => {
+      const j = await api('rechazarSolicitud', {id: x.id, motivo: f.querySelector('#rMot').value.trim()});
+      if (!j.ok) { toast(msgErr(j.error), true); return; }
+      cerrar(f); toast('Solicitud rechazada y fotos eliminadas'); cargarSolicitudes();
+    };
+  });
+}
+function aprobarSol(x) {
+  const p = x.padron, v = Object.assign({}, x, p ? Object.fromEntries(Object.entries(p).filter(e => e[1])) : {});
+  const fijo = k => p && p[k] ? ' disabled title="Según el padrón (edítelo en «Padrón de cargos»)"' : '';
+  const esJefe = /^(Jefe|Comandante|Director)\b/.test(v.cargo || '');
+  const f = modal('<div class="mcab"><h3>Aprobar alta</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
+    (p ? '<p class="cuenta">Los campos bloqueados vienen del <b>padrón</b> y son obligatorios.</p>' : '') +
+    '<div class="fila2"><div class="campo"><label>Grado</label><input id="pGrado" maxlength="40" value="' + esc(v.grado) + '"' + fijo('grado') + '></div><div class="campo"><label>Apellidos y nombres</label><input id="pNombre" maxlength="100" value="' + esc(v.nombre) + '"' + fijo('nombre') + '></div></div>' +
+    '<div class="fila2"><div class="campo"><label>Dependencia</label><select id="pDep"' + fijo('dependencia') + '></select></div><div class="campo"><label>Puesto</label><select id="pPuesto"' + fijo('cargo') + '></select></div></div>' +
+    '<div class="fila2"><div class="campo"><label>Rol en el sistema</label><select id="pRol"><option value="usuario"' + (esJefe ? '' : ' selected') + '>Usuario</option><option value="jefe"' + (esJefe ? ' selected' : '') + '>Jefe de dependencia</option></select></div><div></div></div>' +
+    '<p class="cuenta">Al aprobar, las fotos del DNI y del carné se <b>borran definitivamente</b>.</p>' +
+    '</div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn p" id="pSi">✔ Aprobar</button></div>', true);
+  llenarSelectDeps(f.querySelector('#pDep'), false, v.dependencia);
+  const llenar = () => { const L = (S.puestos[f.querySelector('#pDep').value] || []).slice(); if (v.cargo && L.indexOf(v.cargo) < 0) L.unshift(v.cargo);
+    f.querySelector('#pPuesto').innerHTML = L.map(c => '<option' + (c === v.cargo ? ' selected' : '') + '>' + esc(c) + '</option>').join(''); };
+  f.querySelector('#pDep').addEventListener('change', () => { v.cargo = ''; llenar(); }); llenar();
+  f.querySelector('#pSi').onclick = async () => {
+    const j = await api('aprobarSolicitud', {id: x.id, grado: f.querySelector('#pGrado').value.trim(), nombre: f.querySelector('#pNombre').value.trim(),
+      dependencia: f.querySelector('#pDep').value, cargo: f.querySelector('#pPuesto').value, rol: f.querySelector('#pRol').value});
+    if (!j.ok) { toast(msgErr(j.error), true); return; }
+    cerrar(f);
+    toast('Alta aprobada' + (j.corregidoPorPadron && j.corregidoPorPadron.length ? ' (corregido según padrón: ' + j.corregidoPorPadron.map(c => CAMPOS[c.campo]).join(', ') + ')' : '') + '. Fotos eliminadas.');
+    if (!j.aparatos) { const u = (await api('usuarios')).usuarios || []; const w = u.filter(y => y.id === j.usuario.id)[0];
+      if (w && await confirmar('Sin huella registrada', '<p>' + esc(w.nombre) + ' no registró huella ni rostro. ¿Generar ahora una clave personal para entregársela?</p>', 'Generar clave')) {
+        const c = await api('nuevaClave', {id: w.id}); if (c.ok) mostrarClave(w, c.clave); } }
+    cargarSolicitudes(); cargarPersonal();
+  };
+}
+
+/* ---------- padrón de cargos (admin) ---------- */
+S.padron = []; S.padronMod = {};
+async function cargarCargos() {
+  const j = await api('cargos'); if (!j.ok) { toast(msgErr(j.error), true); return; }
+  if (!S.puestos || !Object.keys(S.puestos).length) { const u = await api('usuarios'); if (u.ok) S.puestos = u.puestos || {}; }
+  S.padron = j.cargos || []; S.padronMod = {}; pintarCargos();
+}
+$('#cTexto').addEventListener('input', () => pintarCargos());
+function opcionesDep(valor) {
+  let h = '<option value="">—</option>';
+  S.grupos.forEach(g => { const L = S.arbol.filter(x => x.grupo === g.grupo); h += '<optgroup label="' + esc(g.grupo) + '">' + L.map(x => '<option value="' + esc(x.ruta) + '"' + (x.ruta === valor ? ' selected' : '') + '>' + '  '.repeat(x.nivel) + esc(x.nombre) + '</option>').join('') + '</optgroup>'; });
+  return h;
+}
+function pintarCargos() {
+  const q = $('#cTexto').value.trim().toLowerCase();
+  const L = S.padron.filter(c => !q || [c.dni, c.grado, c.nombre, c.dependencia, c.cargo].join(' ').toLowerCase().indexOf(q) >= 0);
+  $('#cCuenta').textContent = S.padron.length + ' personas en el padrón' + (q ? ' · ' + L.length + ' coinciden' : '') + '. Edite directamente en la tabla y pulse «Guardar cambios». Lo que diga el padrón prevalece sobre lo que declare cada persona.';
+  const LIM = 400;
+  $('#cLista').innerHTML = L.slice(0, LIM).map(c => '<tr data-id="' + esc(c.id) + '" class="' + (S.padronMod[c.id] ? 'mod' : '') + '"><td><input data-k="dni" value="' + esc(c.dni) + '" maxlength="8" inputmode="numeric" style="width:92px"></td><td><input data-k="grado" value="' + esc(c.grado) + '" style="width:100px"></td><td><input data-k="nombre" value="' + esc(c.nombre) + '"></td>' +
+    '<td><select data-k="dependencia">' + opcionesDep(c.dependencia) + '</select></td><td><input data-k="cargo" value="' + esc(c.cargo) + '" list="pl_' + esc(c.id) + '"><datalist id="pl_' + esc(c.id) + '">' + (S.puestos[c.dependencia] || []).map(x => '<option value="' + esc(x) + '">').join('') + '</datalist></td>' +
+    '<td><button class="btn" data-del title="Quitar del padrón">🗑</button></td></tr>').join('') + (L.length > LIM ? '<tr><td colspan="6" class="cuenta">Mostrando ' + LIM + ' de ' + L.length + '. Use el buscador.</td></tr>' : '');
+  $$('#cLista tr[data-id]').forEach(tr => {
+    const c = S.padron.filter(x => x.id === tr.dataset.id)[0];
+    tr.querySelectorAll('[data-k]').forEach(inp => inp.addEventListener('change', () => {
+      c[inp.dataset.k] = inp.value.trim(); S.padronMod[c.id] = true; tr.classList.add('mod'); marcarCambios();
+      if (inp.dataset.k === 'dependencia') tr.querySelector('datalist').innerHTML = (S.puestos[c.dependencia] || []).map(x => '<option value="' + esc(x) + '">').join('');
+    }));
+    tr.querySelector('[data-del]').onclick = async () => {
+      if (c.id.indexOf('nuevo') === 0) { S.padron = S.padron.filter(x => x !== c); delete S.padronMod[c.id]; pintarCargos(); marcarCambios(); return; }
+      if (!await confirmar('Quitar del padrón', '<p>¿Quitar a <b>' + esc(c.nombre || c.cargo) + '</b> del padrón?</p>', 'Quitar')) return;
+      const j = await api('eliminarCargo', {id: c.id}); if (!j.ok) { toast(msgErr(j.error), true); return; }
+      S.padron = S.padron.filter(x => x !== c); pintarCargos(); toast('Quitado del padrón');
+    };
+  });
+  marcarCambios();
+}
+function marcarCambios() { const n = Object.keys(S.padronMod).length; $('#cCambios').textContent = n ? n + ' fila(s) con cambios sin guardar' : ''; }
+$('#bCargoNuevo').onclick = () => { const c = {id: 'nuevo' + Date.now(), dni: '', grado: '', nombre: '', dependencia: '', cargo: ''}; S.padron.unshift(c); S.padronMod[c.id] = true; $('#cTexto').value = ''; pintarCargos(); };
+$('#bCargosDeshacer').onclick = () => cargarCargos();
+$('#bCargosGuardar').onclick = () => guardarPadron(S.padron.filter(c => S.padronMod[c.id]), false);
+async function guardarPadron(filas, reemplazar) {
+  if (!filas.length && !reemplazar) { toast('No hay cambios que guardar.'); return; }
+  const malo = filas.find(c => c.dni && !/^\d{8}$/.test(c.dni)); if (malo) { toast(ERRORES.dni_invalido + ': ' + (malo.nombre || malo.dni), true); return; }
+  const j = await api('guardarCargos', {filas: filas.map(c => Object.assign({}, c, {id: String(c.id || '').indexOf('nuevo') === 0 ? '' : (c.id || '')})), reemplazar: reemplazar});
+  if (!j.ok) { toast(msgErr(j.error, j.fila || ''), true); return; }
+  const corr = j.corregidos || [];
+  if (corr.length) modal('<div class="mcab"><h3>Padrón guardado</h3></div><div class="mcuerpo"><p>Se guardaron ' + j.guardadas + ' filas. Según el padrón, se corrigieron los datos de ' + corr.length + ' persona(s) registrada(s):</p><ul>' +
+    corr.map(c => '<li><b>' + esc(c.usuario) + '</b>: ' + c.cambios.map(x => CAMPOS[x.campo] + ' «' + esc(x.declarado) + '» → «' + esc(x.padron) + '»').join('; ') + '</li>').join('') + '</ul></div><div class="mpie"><button class="btn p" data-cerrar>Listo</button></div>', true);
+  else toast('Padrón guardado (' + j.guardadas + ' filas)');
+  cargarCargos(); cargarPersonal();
+}
+$('#bCargosCsv').onclick = () => {
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = '﻿' + ['DNI', 'Grado', 'Apellidos y nombres', 'Dependencia', 'Puesto / cargo'].map(q).join(';') + '\n' + S.padron.map(c => [c.dni, c.grado, c.nombre, c.dependencia, c.cargo].map(q).join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'})); a.download = 'padron_cargos.csv'; a.click();
+};
+$('#bPadronPdf').onclick = () => $('#cPdf').click();
+$('#cPdf').onchange = async () => {
+  const file = $('#cPdf').files[0]; $('#cPdf').value = ''; if (!file) return;
+  if (file.size > 20 * 1024 * 1024) { toast('El PDF supera los 20 MB. Divídalo en partes.', true); return; }
+  const b = $('#bPadronPdf'); b.disabled = true; b.textContent = '⏳ La IA está leyendo el PDF (puede tardar 1–2 minutos)…';
+  let j; try { j = await api('leerPadronPdf', {archivo: await leerArchivo(file)}); } finally { b.disabled = false; b.textContent = '📄 Cargar PDF del padrón (la IA lo lee)'; }
+  if (!j.ok) { toast(msgErr(j.error), true); return; }
+  const filas = j.filas || [];
+  const f = modal('<div class="mcab"><h3>Padrón leído del PDF (' + filas.length + ' filas)</h3><button data-cerrar>×</button></div><div class="mcuerpo">' +
+    (j.incompleto ? '<p class="dif" style="color:var(--venc)">⚠ El PDF es muy largo y la lectura quedó incompleta. Guarde estas filas con «Agregar» y luego cargue el resto del PDF por partes.</p>' : '') +
+    '<p class="cuenta">Revise la lectura antes de guardar. Las filas en amarillo tienen una dependencia que la IA no pudo ubicar en la organización: corríjala luego en la tabla.</p>' +
+    '<div class="tabwrap" style="max-height:50vh;overflow:auto"><table class="t"><thead><tr><th>DNI</th><th>Grado</th><th>Nombre</th><th>Dependencia</th><th>Puesto</th></tr></thead><tbody>' +
+    filas.map(x => '<tr' + (x.dependencia ? '' : ' class="pend"') + '><td>' + esc(x.dni) + '</td><td>' + esc(x.grado) + '</td><td>' + esc(x.nombre) + '</td><td>' + esc(x.dependencia ? corto(x.dependencia) : x.dependenciaLeida || '—') + '</td><td>' + esc(x.cargo) + '</td></tr>').join('') +
+    '</tbody></table></div></div><div class="mpie"><button class="btn" data-cerrar>Cancelar</button><button class="btn" id="pdAgregar">Agregar al padrón actual</button><button class="btn p" id="pdReemplazar">Reemplazar todo el padrón</button></div>');
+  const limpiar = () => filas.map(x => ({dni: x.dni, grado: x.grado, nombre: x.nombre, dependencia: x.dependencia, cargo: x.cargo}));
+  f.querySelector('#pdAgregar').onclick = () => { cerrar(f); guardarPadron(limpiar(), false); };
+  f.querySelector('#pdReemplazar').onclick = async () => { if (!await confirmar('Reemplazar padrón', '<p>Se borrará el padrón actual y quedará solo lo leído de este PDF (' + filas.length + ' filas).</p>', 'Reemplazar')) return; cerrar(f); guardarPadron(limpiar(), true); };
 };
 
 /* ---------- inicio ---------- */
