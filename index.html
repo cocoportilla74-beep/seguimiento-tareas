@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-dCl77JOFm0IHY8v0A/dTx5PF1VmA2xCsL4k02d/9z6A=' https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/; style-src 'sha256-zjdJaT4yzQxpEf3tgD57UNurXwk372aYILVUBrT/12U='; img-src 'self' data: blob:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-9ymD7d3zpdNEeYxChzWs0GHp0NLLlaeFFy+V5FRa0Ms=' https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/; style-src 'sha256-fj34oubHxASQjLu0oi3yUXG0BRQDXFCw5QymC26VSHs='; img-src 'self' data: blob:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; upgrade-insecure-requests">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
@@ -30,6 +30,41 @@ header img{height:52px;width:auto}
 nav.tabs{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--borde);padding:0 12px;position:sticky;top:68px;z-index:15;overflow-x:auto}
 nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:11px 14px;font-weight:bold;color:var(--gris);white-space:nowrap;text-transform:uppercase;font-size:13.5px}
 nav.tabs button.on{color:var(--azul);border-color:var(--oro)}
+/* ---------- calendario ---------- */
+.calbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.calbar h3{margin:0 8px;font-size:18px;color:var(--azul);min-width:200px}
+.calbar select{width:auto;max-width:300px}
+.seg{display:inline-flex;border:1px solid var(--borde);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:7px 12px;font-weight:bold;color:var(--gris);cursor:pointer}
+.seg button.on{background:var(--azul);color:#fff}
+.calmes{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--borde);border-left:1px solid var(--borde);background:#fff}
+.calmes .dn{background:var(--azulc);font-weight:bold;font-size:12.5px;text-align:center;padding:5px 2px;color:var(--azul);border-right:1px solid var(--borde);border-bottom:1px solid var(--borde);text-transform:uppercase}
+.cd{min-height:108px;border-right:1px solid var(--borde);border-bottom:1px solid var(--borde);padding:3px;display:flex;flex-direction:column;gap:2px;cursor:pointer;min-width:0}
+.cd:hover{background:#fafbfd}
+.cd.fuera{background:#f6f7f9;color:#9ca3af}
+.cd.hoy .num{background:var(--oro);color:#fff;border-radius:50%}
+.cd .num{font-size:12.5px;font-weight:bold;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cchip{display:block;font-size:12px;line-height:1.25;padding:2px 5px;border-radius:4px;background:#eef2f8;border-left:4px solid var(--pend);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:var(--txt);text-align:left;width:100%;border-top:0;border-right:0;border-bottom:0;font-family:inherit}
+.cchip:hover{filter:brightness(.95)}
+.cchip.venc{background:#fde8e8}
+.cchip.term{opacity:.65;text-decoration:line-through}
+.mas{font-size:11.5px;color:var(--azul2);font-weight:bold;padding-left:4px}
+.calsem{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.calsem .col{background:#fff;border:1px solid var(--borde);border-radius:8px;min-height:260px;display:flex;flex-direction:column;min-width:0}
+.calsem .col.hoy{border-color:var(--oro);box-shadow:0 0 0 2px var(--oro) inset}
+.calsem .cab{background:var(--azulc);color:var(--azul);font-weight:bold;padding:6px;text-align:center;font-size:13px;border-radius:8px 8px 0 0;cursor:pointer;text-transform:capitalize}
+.calsem .cuerpo{padding:5px;display:flex;flex-direction:column;gap:4px}
+.calsem .cchip{white-space:normal}
+.caldia{background:#fff;border:1px solid var(--borde);border-radius:10px;padding:6px 12px}
+.caldia .it{display:flex;gap:10px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--borde);cursor:pointer;width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;font-family:inherit;font-size:inherit;color:inherit}
+.caldia .it:last-child{border-bottom:0}
+.caldia .it:hover{background:#fafbfd}
+.caldia .bar{width:5px;align-self:stretch;border-radius:3px;flex:none}
+.caldia .marca{font-size:12px;font-weight:bold;padding:1px 7px;border-radius:10px;background:var(--azulc);color:var(--azul);white-space:nowrap}
+.caldia .marca.v{background:#fde8e8;color:var(--venc)}
+.calley{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--gris);margin-top:8px}
+.calley i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+@media (max-width:700px){.cd{min-height:64px;overflow:hidden}.cd .cchip{font-size:0;height:6px;padding:0;border-left-width:90px;border-radius:3px}.calsem{grid-template-columns:1fr}.calsem .col{min-height:0}.calbar h3{min-width:0;flex-basis:100%;order:-1}}
 main{max-width:1200px;margin:0 auto;padding:16px 14px 80px}
 /* login */
 #login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(160deg,#0b2a5b 0%,#163f80 60%,#0b2a5b 100%);padding:20px}
@@ -251,6 +286,7 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
   <nav class="tabs">
     <button data-v="panel" class="on">Panel</button>
     <button data-v="tareas">Tareas</button>
+    <button data-v="calendario">Calendario</button>
     <button data-v="usuarios" class="oculto" id="tabUsuarios">Personal y claves</button>
     <button data-v="solicitudes" class="oculto" id="tabSolicitudes">Solicitudes de alta <span class="badge oculto" id="nSol"></span></button>
     <button data-v="cargos" class="oculto" id="tabCargos">Padrón de cargos</button>
@@ -293,6 +329,18 @@ details.det summary{cursor:pointer;font-weight:bold;color:var(--azul);font-size:
       </div>
       <p class="cuenta" id="cuenta"></p>
       <div class="lista" id="lista"></div>
+    </section>
+
+    <section id="vCal" class="oculto">
+      <div class="calbar">
+        <div class="seg" role="group" aria-label="Vista del calendario"><button data-cv="dia">Día</button><button data-cv="semana">Semana</button><button data-cv="mes" class="on">Mes</button></div>
+        <button class="btn" id="cPrev" aria-label="Anterior">◀</button><button class="btn" id="cHoy">Hoy</button><button class="btn" id="cSig" aria-label="Siguiente">▶</button>
+        <h3 id="cTit"></h3>
+        <select id="cDep"><option value="">Todas las dependencias</option></select>
+        <label class="chk"><input type="checkbox" id="cTerm"> Mostrar terminadas y canceladas</label>
+      </div>
+      <div id="cGrid"></div>
+      <div class="calley" id="cLey"></div>
     </section>
 
     <!-- USUARIOS (solo admin) -->
@@ -536,11 +584,90 @@ async function recargar(silencioso) {
   if (!j.ok) { if (j.error !== 'sesion_invalida' && !silencioso) toast(msgErr(j.error), true); return false; }
   aplicarSesion(j);
   S.tareas = j.tareas || []; S.bitacora = j.bitacora || []; S.fotos = j.fotos || []; S.documentos = j.documentos || []; S.levantamientos = j.levantamientos || []; S.servidor = j.servidor;
-  pintarPanel(); pintarLista();
+  pintarPanel(); pintarLista(); if (S.vista === 'calendario') pintarCal();
   return true;
 }
 setInterval(() => { if (S.token && !document.hidden && !$('#modales').children.length) recargar(true); }, 120000);
 $('#bRefrescar').onclick = () => recargar().then(ok => ok && toast('Datos actualizados'));
+
+/* ---------- calendario de actividades ---------- */
+const CAL = { vista: 'mes', ref: hoyISO() };
+const DIAS_C = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+function isoDe(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fechaDe(iso) { return new Date(iso + 'T00:00:00'); }
+function sumarDias(iso, n) { const d = fechaDe(iso); d.setDate(d.getDate() + n); return isoDe(d); }
+function lunesDe(iso) { const d = fechaDe(iso); const w = (d.getDay() + 6) % 7; d.setDate(d.getDate() - w); return isoDe(d); }
+function tareasCal() {
+  const dep = $('#cDep').value, todas = $('#cTerm').checked;
+  return S.tareas.filter(t => (t.inicio || t.fin) && (todas || activa(t)) && (!dep || enRama(t, dep)));
+}
+function tareasDelDia(lista, iso) {
+  return lista.filter(t => { const a = t.inicio || t.fin, b = t.fin || t.inicio; return a <= iso && iso <= b; })
+    .sort((x, y) => (x.fin || '').localeCompare(y.fin || '') || (x.titulo || '').localeCompare(y.titulo || ''));
+}
+function chipCal(t, iso, largo) {
+  const e = ESTADOS[t.estado] || ESTADOS.pendiente, v = vencida(t);
+  const marca = t.fin === iso ? '⏰ ' : (t.inicio === iso ? '▶ ' : '');
+  const tip = (t.titulo || '') + ' · ' + e.n + (t.fin ? ' · vence ' + fFecha(t.fin) : '');
+  return '<button type="button" class="cchip' + (v ? ' venc' : '') + (activa(t) ? '' : ' term') + '" data-t="' + esc(t.id) + '" title="' + esc(tip) + '" data-st="border-left-color:' + (v ? 'var(--venc)' : e.c) + '">' +
+    marca + esc(t.titulo || '(sin título)') + (largo ? '<br><small>' + esc(e.n) + (t.avance ? ' · ' + (+t.avance) + '%' : '') + '</small>' : '') + '</button>';
+}
+function pintarCal() {
+  if (!S.tareas) return;
+  const sel = $('#cDep'); if (sel.options.length <= 1) { llenarSelectDeps(sel, true, ''); }
+  $$('.seg button').forEach(b => b.classList.toggle('on', b.dataset.cv === CAL.vista));
+  const L = tareasCal(), hoy = hoyISO(), r = CAL.ref; let h = '', tit = '';
+  if (CAL.vista === 'mes') {
+    const d0 = fechaDe(r); d0.setDate(1); const ini = lunesDe(isoDe(d0)), mes = d0.getMonth();
+    tit = d0.toLocaleDateString('es-PE', {month: 'long', year: 'numeric'});
+    h = '<div class="calmes">' + DIAS_C.map(x => '<div class="dn">' + x + '</div>').join('');
+    for (let i = 0; i < 42; i++) {
+      const iso = sumarDias(ini, i), dd = fechaDe(iso);
+      if (i === 35 && dd.getMonth() !== mes) break;
+      const ts = tareasDelDia(L, iso), max = 3;
+      h += '<div class="cd' + (dd.getMonth() !== mes ? ' fuera' : '') + (iso === hoy ? ' hoy' : '') + '" data-d="' + iso + '"><span class="num">' + dd.getDate() + '</span>' +
+        ts.slice(0, max).map(t => chipCal(t, iso)).join('') + (ts.length > max ? '<span class="mas">+' + (ts.length - max) + ' más</span>' : '') + '</div>';
+    }
+    h += '</div>';
+  } else if (CAL.vista === 'semana') {
+    const ini = lunesDe(r), fin = sumarDias(ini, 6);
+    tit = 'Semana del ' + fechaDe(ini).toLocaleDateString('es-PE', {day: 'numeric', month: 'short'}) + ' al ' + fechaDe(fin).toLocaleDateString('es-PE', {day: 'numeric', month: 'short', year: 'numeric'});
+    h = '<div class="calsem">';
+    for (let i = 0; i < 7; i++) {
+      const iso = sumarDias(ini, i), ts = tareasDelDia(L, iso);
+      h += '<div class="col' + (iso === hoy ? ' hoy' : '') + '"><div class="cab" data-d="' + iso + '">' + fechaDe(iso).toLocaleDateString('es-PE', {weekday: 'short', day: 'numeric'}) + '</div><div class="cuerpo">' +
+        (ts.length ? ts.map(t => chipCal(t, iso, true)).join('') : '<span class="cuenta">—</span>') + '</div></div>';
+    }
+    h += '</div>';
+  } else {
+    tit = fechaDe(r).toLocaleDateString('es-PE', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+    const ts = tareasDelDia(L, r);
+    h = '<div class="caldia">' + (ts.length ? ts.map(t => {
+      const e = ESTADOS[t.estado] || ESTADOS.pendiente, v = vencida(t);
+      const marca = t.fin === r ? '<span class="marca v">⏰ Vence hoy</span>' : (t.inicio === r ? '<span class="marca">▶ Inicia</span>' : '');
+      return '<button type="button" class="it" data-t="' + esc(t.id) + '"><span class="bar" data-st="background:' + (v ? 'var(--venc)' : e.c) + '"></span><span data-st="flex:1;min-width:0"><b>' + esc(t.titulo || '(sin título)') + '</b> ' + marca +
+        '<br><small class="cuenta">' + esc(t.area || '') + (t.responsable ? ' · ' + esc(t.responsable) : '') + ' · ' + esc(e.n) + (t.avance ? ' · ' + (+t.avance) + '%' : '') +
+        ' · ' + fFecha(t.inicio) + ' → ' + fFecha(t.fin) + (v ? ' · <b data-st="color:var(--venc)">vencida</b>' : '') + '</small></span></button>';
+    }).join('') : '<p class="cuenta">No hay actividades programadas para este día.</p>') + '</div>';
+  }
+  $('#cTit').textContent = tit.charAt(0).toUpperCase() + tit.slice(1);
+  $('#cGrid').innerHTML = h;
+  $('#cLey').innerHTML = Object.values(ESTADOS).map(e => '<span><i data-st="background:' + e.c + '"></i>' + esc(e.n) + '</span>').join('') +
+    '<span><i data-st="background:var(--venc)"></i>Vencida</span><span>▶ inicia · ⏰ vence</span><span>' + L.length + ' actividades con fecha</span>';
+}
+$$('.seg button').forEach(b => b.onclick = () => { CAL.vista = b.dataset.cv; pintarCal(); });
+$('#cPrev').onclick = () => movCal(-1); $('#cSig').onclick = () => movCal(1);
+$('#cHoy').onclick = () => { CAL.ref = hoyISO(); pintarCal(); };
+function movCal(n) {
+  if (CAL.vista === 'mes') { const d = fechaDe(CAL.ref); d.setDate(1); d.setMonth(d.getMonth() + n); CAL.ref = isoDe(d); }
+  else CAL.ref = sumarDias(CAL.ref, CAL.vista === 'semana' ? 7 * n : n);
+  pintarCal();
+}
+$('#cDep').addEventListener('input', pintarCal); $('#cTerm').addEventListener('input', pintarCal);
+$('#cGrid').addEventListener('click', ev => {
+  const t = ev.target.closest('[data-t]'); if (t) { abrirTarea(t.dataset.t); return; }
+  const d = ev.target.closest('[data-d]'); if (d) { CAL.ref = d.dataset.d; CAL.vista = 'dia'; pintarCal(); }
+});
 
 function llenarSelectDeps(sel, conTodas, valor, rama) {
   let h = conTodas ? '<option value="">Todas las dependencias</option>' : '';
@@ -559,6 +686,8 @@ function cambiarVista(v) {
   $$('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('#vPanel').classList.toggle('oculto', v !== 'panel');
   $('#vTareas').classList.toggle('oculto', v !== 'tareas');
+  $('#vCal').classList.toggle('oculto', v !== 'calendario');
+  if (v === 'calendario') pintarCal();
   $('#vUsuarios').classList.toggle('oculto', v !== 'usuarios');
   $('#vSolicitudes').classList.toggle('oculto', v !== 'solicitudes');
   $('#vCargos').classList.toggle('oculto', v !== 'cargos');
